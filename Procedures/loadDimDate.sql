@@ -1,3 +1,10 @@
+/* 
+Run this immediately after midnight each night to update all the relative values.
+Make sure to:
+    - update your @FiscalYearStartMMDD, July 1 (0701) was set because Australia.
+    - update the UTC Offset for your local timezone.
+*/
+
 USE [Meta]
 GO
 
@@ -6,14 +13,15 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[loadDimDate]
+create PROCEDURE [dbo].[loadDimDate]
     @FiscalYearStartMMDD CHAR(4) = '0701',   -- default fiscal year start: July 1
-    @MaximumDate DATE = '2099-12-31'
+    @MaximumDate DATE = '2099-12-31',
+    @UTCOffsetMinutes int = 480
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @TodayDate DATE = CAST(GETDATE() AS DATE);
+    DECLARE @TodayDate DATE = CAST(Dateadd(n, @UTCOffsetMinutes, GetUTCDATE()) AS DATE);
     DECLARE @YesterdayDate DATE = DATEADD(DAY, -1, @TodayDate);
 
     -- Compute the current fiscal year start once, based on today's date
