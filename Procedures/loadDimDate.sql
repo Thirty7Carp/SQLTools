@@ -1,8 +1,10 @@
 /* 
 Run this immediately after midnight each night to update all the relative values.
+
 Make sure to:
-    - update your @FiscalYearStartMMDD, July 1 (0701) was set because Australia.
-    - update the UTC Offset for your local timezone.
+    - update the @FiscalYearStartMMDD, July 1 (0701) was set because Australia.
+    - update the @UTCOffsetMinutes to reflect your local timezone, 480 was set because Perth.
+    - Updated the @MaximumDate if you need dates after 2099 for some reason.
 */
 
 USE [Meta]
@@ -13,8 +15,8 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-create PROCEDURE [dbo].[loadDimDate]
-    @FiscalYearStartMMDD CHAR(4) = '0701',   -- default fiscal year start: July 1
+CREATE PROCEDURE [dbo].[loadDimDate]
+    @FiscalYearStartMMDD CHAR(4) = '0701',
     @MaximumDate DATE = '2099-12-31',
     @UTCOffsetMinutes int = 480
 AS
@@ -181,7 +183,6 @@ BEGIN
     FROM DateSequence
     OPTION (MAXRECURSION 0);
 
-    PRINT 'Loaded DimDate'
 END
 GO
 
