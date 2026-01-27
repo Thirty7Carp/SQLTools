@@ -7,7 +7,6 @@ Make sure to:
     - Updated the @MaximumDate if you need dates after 2099 for some reason.
 */
 
-USE [Meta]
 GO
 
 SET ANSI_NULLS ON
@@ -15,7 +14,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[loadDimDate]
+create PROCEDURE [dbo].[loadDimDate]
     @FiscalYearStartMMDD CHAR(4) = '0701',
     @MaximumDate DATE = '2099-12-31',
     @UTCOffsetMinutes int = 480
@@ -50,7 +49,7 @@ BEGIN
         DimDate_SK, Date,
 
         -- Calendar fields
-        CalendarYear, Month, Day, MonthName, DayName,
+        CalendarYear, Month, Day, MonthName, MonthShortName, MonthAndCalendarYear, DayName,
         CalendarQuarter, CalendarHalf,
         MonthStart, CalendarQuarterStart, CalendarHalfStart,
         WeekStartMonday, WeekStartSunday,
@@ -67,7 +66,7 @@ BEGIN
         RelativeWeekStartMonday, RelativeWeekStartSunday,
 
         -- Flags
-        IsWeekend,
+        IsWeekday, IsWeekend,
         IsMTDToday, IsMTDYesterday,
         IsYTDToday, IsYTDYesterday,
         IsFiscalYTDToday, IsFiscalYTDYesterday
@@ -81,6 +80,8 @@ BEGIN
         Month            = MONTH(TheDate),
         Day              = DAY(TheDate),
         MonthName        = DATENAME(MONTH, TheDate),
+        MonthShortName   = LEFT(DATENAME(MONTH, TheDate), 3),
+        MonthAndCalendarYear = LEFT(DATENAME(MONTH, TheDate), 3) + ' ' + CAST(YEAR(TheDate) AS VARCHAR(4)),
         DayName          = DATENAME(WEEKDAY, TheDate),
         CalendarQuarter  = DATEPART(QUARTER, TheDate),
         CalendarHalf     = CASE WHEN MONTH(TheDate) <= 6 THEN 1 ELSE 2 END,
@@ -164,7 +165,8 @@ BEGIN
             DATEADD(DAY, -DATEPART(WEEKDAY, TheDate) + 1, TheDate)
         ),
 
-                -- Flags
+        -- Flags
+        IsWeekday        = CASE WHEN DATENAME(WEEKDAY, TheDate) NOT IN ('Saturday','Sunday') THEN 1 ELSE 0 END,
         IsWeekend        = CASE WHEN DATENAME(WEEKDAY, TheDate) IN ('Saturday','Sunday') THEN 1 ELSE 0 END,
         IsMTDToday       = CASE WHEN DAY(TheDate) <= DAY(@TodayDate) THEN 1 ELSE 0 END,
         IsMTDYesterday   = CASE WHEN DAY(TheDate) <= DAY(@YesterdayDate) THEN 1 ELSE 0 END,
@@ -183,6 +185,41 @@ BEGIN
     FROM DateSequence
     OPTION (MAXRECURSION 0);
 
+
+    -- Dynamic Holiday Flag Update
+    DECLARE @HolidaySQL NVARCHAR(MAX) = '';
+    DECLARE @HolidayType VARCHAR(100);
+    DECLARE @ColumnName SYSNAME;
+
+    DECLARE holiday_cursor CURSOR FOR
+    SELECT 
+        COLUMN_NAME,
+        REPLACE(COLUMN_NAME, 'Holiday_', '') AS HolidayType
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'DimDate'
+      AND TABLE_SCHEMA = 'dbo'
+      AND COLUMN_NAME LIKE 'Holiday_%';
+
+    OPEN holiday_cursor;
+    FETCH NEXT FROM holiday_cursor INTO @ColumnName, @HolidayType;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @HolidaySQL = '
+        UPDATE d
+        SET d.' + QUOTENAME(@ColumnName) + ' = CASE WHEN ph.DateKey_SK IS NOT NULL THEN 1 ELSE 0 END
+        FROM dbo.DimDate d
+        LEFT JOIN dbo.PublicHoliday ph 
+            ON ph.DateKey_SK = d.DimDate_SK 
+            AND ph.PublicHolidayType = ''' + @HolidayType + ''';';
+    
+        EXEC sp_executesql @HolidaySQL;
+    
+        FETCH NEXT FROM holiday_cursor INTO @ColumnName, @HolidayType;
+    END;
+
+    CLOSE holiday_cursor;
+    DEALLOCATE holiday_cursor;
+
 END
 GO
-
