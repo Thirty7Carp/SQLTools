@@ -14,8 +14,9 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-create PROCEDURE [dbo].[loadDimDate]
+alter PROCEDURE [dbo].[loadDimDate]
     @FiscalYearStartMMDD CHAR(4) = '0701',
+    @MinimumDate date = '1800-01-01',
     @MaximumDate DATE = '2099-12-31',
     @UTCOffsetMinutes int = 480
 AS
@@ -39,7 +40,7 @@ BEGIN
     TRUNCATE TABLE dbo.DimDate;
 
     ;WITH DateSequence AS (
-        SELECT CAST('1900-01-01' AS DATE) AS TheDate
+        SELECT CAST(@MinimumDate AS DATE) AS TheDate
         UNION ALL
         SELECT DATEADD(DAY, 1, TheDate)
         FROM DateSequence
@@ -220,6 +221,43 @@ BEGIN
 
     CLOSE holiday_cursor;
     DEALLOCATE holiday_cursor;
+
+DECLARE @HolidayRelativeBusinessDaysSQL NVARCHAR(MAX) = '';
+
+-- Build dynamic SQL for each holiday column
+SELECT @HolidayRelativeBusinessDaysSQL = @HolidayRelativeBusinessDaysSQL +
+'
+UPDATE d
+SET RelativeBusinessDays_' + COLUMN_NAME + ' =
+    (
+        (
+        -- Count weekdays between d.[Date] and @TodayDate
+        (SELECT COUNT(*)
+         FROM dbo.DimDate wd
+         WHERE wd.[Date] > d.[Date]
+           AND wd.[Date] <= @TodayDate
+           AND wd.IsWeekend = 0)
+        )
+     -
+        (
+        -- Count weekday holidays between d.[Date] and @TodayDate
+        (SELECT COUNT(*)
+         FROM dbo.DimDate h
+         WHERE h.[Date] > d.[Date]
+           AND h.[Date] <= @TodayDate
+           AND h.' + QUOTENAME(COLUMN_NAME) + ' = 1
+           AND h.IsWeekend = 0)
+        ) 
+     ) * -1
+FROM dbo.DimDate d;
+'
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'DimDate'
+  AND COLUMN_NAME LIKE 'Holiday_%';
+
+-- Execute the dynamic SQL
+EXEC sp_executesql @HolidayRelativeBusinessDaysSQL, N'@TodayDate DATE', @TodayDate = @TodayDate;
+
 
 END
 GO

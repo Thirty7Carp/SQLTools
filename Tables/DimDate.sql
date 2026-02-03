@@ -1,58 +1,76 @@
-USE [Utility]
+drop table dbo.DimDate
+
+SET ANSI_NULLS ON;
 GO
 
-/****** Object:  Table [dbo].[DimDate]    Script Date: 27/01/2026 7:12:58 PM ******/
-SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON;
 GO
 
-SET QUOTED_IDENTIFIER ON
-GO
+DECLARE @sql NVARCHAR(MAX);
 
-create TABLE [dbo].[DimDate](
-	[DimDate_SK] [int] NOT NULL,
-	[Date] [date] NULL,
-	[CalendarYear] [int] NULL,
-	[Month] [int] NULL,
-	[Day] [int] NULL,
-	[MonthName] [varchar](20) NULL,
-	[MonthShortName] [varchar](3) NULL,
-	[MonthAndCalendarYear] [varchar](12) NULL,
-	[DayName] [varchar](20) NULL,
-	[CalendarQuarter] [int] NULL,
-	[CalendarHalf] [int] NULL,
-	[MonthStart] [date] NULL,
-	[CalendarQuarterStart] [date] NULL,
-	[CalendarHalfStart] [date] NULL,
-	[WeekStartMonday] [date] NULL,
-	[WeekStartSunday] [date] NULL,
-	[UnixStartOfDay] [bigint] NULL,
-	[UnixEndOfDay] [bigint] NULL,
-	[FiscalYear] [int] NULL,
-	[FiscalHalf] [int] NULL,
-	[FiscalQuarter] [int] NULL,
-	[FiscalYearStart] [date] NULL,
-	[FiscalHalfStart] [date] NULL,
-	[RelativeCalendarYear] [int] NULL,
-	[RelativeMonth] [int] NULL,
-	[RelativeDay] [int] NULL,
-	[RelativeCalendarQuarter] [int] NULL,
-	[RelativeCalendarHalf] [int] NULL,
-	[RelativeFiscalYear] [int] NULL,
-	[RelativeFiscalHalf] [int] NULL,
-	[RelativeFiscalQuarter] [int] NULL,
-	[RelativeWeekStartMonday] [int] NULL,
-	[RelativeWeekStartSunday] [int] NULL,
-	[IsWeekday] [bit] NULL,
-	[IsWeekend] [bit] NULL,
-	[IsMTDToday] [bit] NULL,
-	[IsMTDYesterday] [bit] NULL,
-	[IsYTDToday] [bit] NULL,
-	[IsYTDYesterday] [bit] NULL,
-	[IsFiscalYTDToday] [bit] NULL,
-	[IsFiscalYTDYesterday] [bit] NULL,
-	[Holiday_AustraliaWA] [bit] NULL,
-	[RelativeBusinessDays_Holiday_AustraliaWA] [int] NULL
-) ON [PRIMARY]
-GO
+-- Base create table script
+SET @sql = '
+CREATE TABLE dbo.DimDate (
+    DimDate_SK INT NOT NULL,
+    Date DATE NULL,
+    CalendarYear INT NULL,
+    Month INT NULL,
+    Day INT NULL,
+    MonthName VARCHAR(20) NULL,
+    MonthShortName VARCHAR(3) NULL,
+    MonthAndCalendarYear VARCHAR(12) NULL,
+    DayName VARCHAR(20) NULL,
+    CalendarQuarter INT NULL,
+    CalendarHalf INT NULL,
+    MonthStart DATE NULL,
+    CalendarQuarterStart DATE NULL,
+    CalendarHalfStart DATE NULL,
+    WeekStartMonday DATE NULL,
+    WeekStartSunday DATE NULL,
+    UnixStartOfDay BIGINT NULL,
+    UnixEndOfDay BIGINT NULL,
+    FiscalYear INT NULL,
+    FiscalHalf INT NULL,
+    FiscalQuarter INT NULL,
+    FiscalYearStart DATE NULL,
+    FiscalHalfStart DATE NULL,
+    RelativeCalendarYear INT NULL,
+    RelativeMonth INT NULL,
+    RelativeDay INT NULL,
+    RelativeCalendarQuarter INT NULL,
+    RelativeCalendarHalf INT NULL,
+    RelativeFiscalYear INT NULL,
+    RelativeFiscalHalf INT NULL,
+    RelativeFiscalQuarter INT NULL,
+    RelativeWeekStartMonday INT NULL,
+    RelativeWeekStartSunday INT NULL,
+    IsWeekday BIT NULL,
+    IsWeekend BIT NULL,
+    IsMTDToday BIT NULL,
+    IsMTDYesterday BIT NULL,
+    IsYTDToday BIT NULL,
+    IsYTDYesterday BIT NULL,
+    IsFiscalYTDToday BIT NULL,
+    IsFiscalYTDYesterday BIT NULL,
+';
 
+-- Add dynamic holiday columns
+SELECT @sql = @sql + '
+    Holiday_' + PublicHolidayType + ' BIT NULL,
+    RelativeBusinessDays_Holiday_' + PublicHolidayType + ' INT NULL,'
+FROM (SELECT DISTINCT PublicHolidayType FROM dbo.PublicHoliday) AS t;
 
+-- Remove trailing comma and close statement
+SET @sql = LEFT(@sql, LEN(@sql)-1) + '
+) ON [PRIMARY];
+';
+
+ EXEC sp_executesql @sql;
+
+ -- Index on IsWeekend for faster filtering of weekdays vs weekends
+CREATE NONCLUSTERED INDEX IX_DimDate_IsWeekend
+ON dbo.DimDate (IsWeekend);
+
+-- Index on Date for faster lookups and range queries
+CREATE NONCLUSTERED INDEX IX_DimDate_Date
+ON dbo.DimDate ([Date]);

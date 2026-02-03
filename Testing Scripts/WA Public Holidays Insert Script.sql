@@ -8,7 +8,6 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
- 
 -- Clear existing WA State holidays (optional - comment out if you want to keep existing data)
 -- DELETE FROM dbo.PublicHoliday WHERE PublicHolidayType = 'AustraliaWA';
 
@@ -226,4 +225,4 @@ INSERT INTO dbo.PublicHoliday (DateKey_SK, PublicHolidayType, PublicHolidayName,
 (20331225, 'AustraliaWA', 'Christmas Day', 0),
 (20331226, 'AustraliaWA', 'Boxing Day', 0),
 (20331227, 'AustraliaWA', 'Christmas Day', 1), -- substitute (Christmas fell on Sunday)
-(20331227, 'AustraliaWA', 'Boxing Day', 1); -- substitute (Boxing Day fell on Monday)
+(20331227, 'AustraliaWA', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
