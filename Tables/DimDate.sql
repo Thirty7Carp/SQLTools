@@ -1,5 +1,3 @@
-drop table if exists dbo.DimDate
-
 SET ANSI_NULLS ON;
 GO
 
@@ -55,10 +53,32 @@ CREATE TABLE dbo.DimDate (
 ';
 
 -- Add dynamic holiday columns
+WITH HolidayFlags AS (
+    SELECT 
+        ph.PublicHolidayType,
+        HasBusinessDays = CASE 
+                             WHEN EXISTS (
+                                 SELECT 1 
+                                 FROM dbo.PublicHoliday ph2
+                                 WHERE ph2.PublicHolidayType = ph.PublicHolidayType
+                                   AND ph2.CountBusinessDays = 1
+                             ) THEN 1 ELSE 0 
+                          END
+    FROM dbo.PublicHoliday ph
+    GROUP BY ph.PublicHolidayType
+)
 SELECT @sql = @sql + '
-    Holiday_' + PublicHolidayType + ' BIT NULL,
-    RelativeBusinessDays_Holiday_' + PublicHolidayType + ' INT NULL,'
-FROM (SELECT DISTINCT PublicHolidayType FROM dbo.PublicHoliday) AS t;
+    Holiday_' + PublicHolidayType + ' BIT NULL,' +
+    CASE 
+        WHEN HasBusinessDays = 1 
+        THEN 'RelativeBusinessDays_Holiday_' + PublicHolidayType + ' INT NULL,' 
+        ELSE '' 
+    END
+FROM HolidayFlags;
+
+
+
+
 
 -- Remove trailing comma and close statement
 SET @sql = LEFT(@sql, LEN(@sql)-1) + '

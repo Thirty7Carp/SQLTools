@@ -14,7 +14,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-create PROCEDURE [dbo].[loadDimDate]
+alter PROCEDURE [dbo].[loadDimDate]
     @FiscalYearStartMMDD CHAR(4) = '0701',
     @MinimumDate date = '1800-01-01',
     @MaximumDate DATE = '2099-12-31',
@@ -193,13 +193,17 @@ BEGIN
     DECLARE @ColumnName SYSNAME;
 
     DECLARE holiday_cursor CURSOR FOR
+    
     SELECT 
-        COLUMN_NAME,
-        REPLACE(COLUMN_NAME, 'Holiday_', '') AS HolidayType
-    FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_NAME = 'DimDate'
-      AND TABLE_SCHEMA = 'dbo'
-      AND COLUMN_NAME LIKE 'Holiday_%';
+        c.COLUMN_NAME,
+        REPLACE(c.COLUMN_NAME, 'Holiday_', '') AS HolidayType
+    FROM 
+        INFORMATION_SCHEMA.COLUMNS c
+    WHERE 
+        c.TABLE_NAME = 'DimDate'
+        AND c.TABLE_SCHEMA = 'dbo'
+        AND c.COLUMN_NAME LIKE 'Holiday%'
+
 
     OPEN holiday_cursor;
     FETCH NEXT FROM holiday_cursor INTO @ColumnName, @HolidayType;
@@ -208,10 +212,10 @@ BEGIN
     BEGIN
         SET @HolidaySQL = '
         UPDATE d
-        SET d.' + QUOTENAME(@ColumnName) + ' = CASE WHEN ph.DateKey_SK IS NOT NULL THEN 1 ELSE 0 END
+        SET d.' + QUOTENAME(@ColumnName) + ' = CASE WHEN ph.DimDate_SK IS NOT NULL THEN 1 ELSE 0 END
         FROM dbo.DimDate d
         LEFT JOIN dbo.PublicHoliday ph 
-            ON ph.DateKey_SK = d.DimDate_SK 
+            ON ph.DimDate_SK = d.DimDate_SK 
             AND ph.PublicHolidayType = ''' + @HolidayType + ''';';
     
         EXEC sp_executesql @HolidaySQL;
@@ -228,36 +232,52 @@ DECLARE @HolidayRelativeBusinessDaysSQL NVARCHAR(MAX) = '';
 SELECT @HolidayRelativeBusinessDaysSQL = @HolidayRelativeBusinessDaysSQL +
 '
 UPDATE d
-SET RelativeBusinessDays_' + COLUMN_NAME + ' =
-    (
-        (
-        -- Count weekdays between d.[Date] and @TodayDate
-        (SELECT COUNT(*)
-         FROM dbo.DimDate wd
-         WHERE wd.[Date] > d.[Date]
-           AND wd.[Date] <= @TodayDate
-           AND wd.IsWeekend = 0)
-        )
-     -
-        (
-        -- Count weekday holidays between d.[Date] and @TodayDate
-        (SELECT COUNT(*)
-         FROM dbo.DimDate h
-         WHERE h.[Date] > d.[Date]
-           AND h.[Date] <= @TodayDate
-           AND h.' + QUOTENAME(COLUMN_NAME) + ' = 1
-           AND h.IsWeekend = 0)
-        ) 
-     ) * -1
+SET ' + COLUMN_NAME + ' =
+    CASE 
+        WHEN d.[Date] < @TodayDate THEN
+            (
+                (SELECT COUNT(*)
+                 FROM dbo.DimDate wd
+                 WHERE wd.[Date] > d.[Date]
+                   AND wd.[Date] <= @TodayDate
+                   AND wd.IsWeekend = 0)
+              -
+                (SELECT COUNT(*)
+                 FROM dbo.DimDate h
+                 WHERE h.[Date] > d.[Date]
+                   AND h.[Date] <= @TodayDate
+                   AND h.' + QUOTENAME(COLUMN_NAME) + ' = 1
+                   AND h.IsWeekend = 0)
+            ) * -1
+        WHEN d.[Date] > @TodayDate THEN
+            (
+                (SELECT COUNT(*)
+                 FROM dbo.DimDate wd
+                 WHERE wd.[Date] > @TodayDate
+                   AND wd.[Date] <= d.[Date]
+                   AND wd.IsWeekend = 0)
+              -
+                (SELECT COUNT(*)
+                 FROM dbo.DimDate h
+                 WHERE h.[Date] > @TodayDate
+                   AND h.[Date] <= d.[Date]
+                   AND h.' + QUOTENAME(COLUMN_NAME) + ' = 1
+                   AND h.IsWeekend = 0)
+            )
+        ELSE 0
+    END
 FROM dbo.DimDate d;
 '
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'DimDate'
-  AND COLUMN_NAME LIKE 'Holiday_%';
+  AND COLUMN_NAME LIKE 'RelativeBusinessDays_%';
 
 -- Execute the dynamic SQL
 EXEC sp_executesql @HolidayRelativeBusinessDaysSQL, N'@TodayDate DATE', @TodayDate = @TodayDate;
 
 
+
+
 END
 GO
+

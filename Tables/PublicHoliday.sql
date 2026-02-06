@@ -4,10 +4,12 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE TABLE [dbo].[PublicHoliday](
-	[DateKey_SK] [int] NOT NULL,
-	[PublicHolidayType] [varchar](100) NULL,
-	[PublicHolidayName] [varchar](100) NULL,
-	[PublicHolidaySubstitute] [bit] NULL
+create TABLE [dbo].[PublicHoliday](
+	[DimDate_SK] [int] NOT NULL,
+	[PublicHolidayType] [varchar](100) NOT NULL,
+	[PublicHolidayName] [varchar](100) NOT NULL,
+	[PublicHolidaySubstitute] [bit] NOT NULL CONSTRAINT DF_PublicHolidaySubstitute DEFAULT (0),
+	[CountBusinessDays] bit NOT NULL CONSTRAINT DF_CountBusinessDays DEFAULT (0)
 ) ON [PRIMARY]
 GO
+
