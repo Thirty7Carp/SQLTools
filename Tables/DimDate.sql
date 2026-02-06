@@ -1,4 +1,4 @@
-drop table dbo.DimDate
+drop table if exists dbo.DimDate
 
 SET ANSI_NULLS ON;
 GO

@@ -11,6 +11,8 @@ GO
 -- Clear existing WA State holidays (optional - comment out if you want to keep existing data)
 -- DELETE FROM dbo.PublicHoliday WHERE PublicHolidayType = 'AustraliaWA';
 
+Truncate table dbo.PublicHoliday
+
 -- 2020 Holidays
 INSERT INTO dbo.PublicHoliday (DateKey_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20200101, 'AustraliaWA', 'New Year''s Day', 0),
@@ -226,3 +228,11 @@ INSERT INTO dbo.PublicHoliday (DateKey_SK, PublicHolidayType, PublicHolidayName,
 (20331226, 'AustraliaWA', 'Boxing Day', 0),
 (20331227, 'AustraliaWA', 'Christmas Day', 1), -- substitute (Christmas fell on Sunday)
 (20331227, 'AustraliaWA', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
+
+/* Test Holidays for new Holiday Types */
+, (20331227, 'CountryStateAA', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
+, (20331227, 'CountryStateBB', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
+, (20331227, 'CountryStateCC', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
+, (20331227, 'CountryStateDD', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
+, (20331227, 'CountryStateEE', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
+, (20331227, 'CountryStateFF', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
