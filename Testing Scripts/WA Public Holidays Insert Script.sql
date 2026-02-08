@@ -238,6 +238,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 , (20280605, 'CountryStateFF', 'Western Australia Day', 1)
 , (20291226, 'CountryStateFF', 'Boxing Day', 0)
 , (20331227, 'CountryStateFF', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
+, (20220126, 'CountryStateFF', 'Australia Day', 0),
 
 /* Update to the CountBusinessDays holidays value */
 Update ph

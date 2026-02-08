@@ -3,8 +3,10 @@ Run this immediately after midnight each night to update all the relative values
 
 Make sure to:
     - update the @FiscalYearStartMMDD, July 1 (0701) was set because Australia.
-    - update the @UTCOffsetMinutes to reflect your local timezone, 480 was set because Perth.
-    - Updated the @MaximumDate if you need dates after 2099 for some reason.
+    - update the @UTCOffsetMinutes to reflect your local timezone, 480 was set because Perth. 
+        That sets @Today as the date it is where you are right now.
+    - Update the @MinimumDate if you need dates before 1800 for some reason.
+    - Update the @MaximumDate if you need dates after 2099 for some reason.
 */
 
 GO
@@ -232,20 +234,20 @@ DECLARE @HolidayRelativeBusinessDaysSQL NVARCHAR(MAX) = '';
 SELECT @HolidayRelativeBusinessDaysSQL = @HolidayRelativeBusinessDaysSQL +
 '
 UPDATE d
-SET ' + COLUMN_NAME + ' =
+SET RelativeBusinessDays_' + COLUMN_NAME + ' =
     CASE 
         WHEN d.[Date] < @TodayDate THEN
             (
                 (SELECT COUNT(*)
                  FROM dbo.DimDate wd
                  WHERE wd.[Date] > d.[Date]
-                   AND wd.[Date] <= @TodayDate
+                   AND wd.[Date] < @TodayDate
                    AND wd.IsWeekend = 0)
               -
                 (SELECT COUNT(*)
                  FROM dbo.DimDate h
                  WHERE h.[Date] > d.[Date]
-                   AND h.[Date] <= @TodayDate
+                   AND h.[Date] < @TodayDate
                    AND h.' + QUOTENAME(COLUMN_NAME) + ' = 1
                    AND h.IsWeekend = 0)
             ) * -1
@@ -268,9 +270,16 @@ SET ' + COLUMN_NAME + ' =
     END
 FROM dbo.DimDate d;
 '
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DimDate'
-  AND COLUMN_NAME LIKE 'RelativeBusinessDays_%';
+FROM INFORMATION_SCHEMA.COLUMNS c
+WHERE c.TABLE_NAME = 'DimDate'
+  AND c.COLUMN_NAME LIKE 'Holiday_%'
+  AND EXISTS (
+      SELECT 1
+      FROM INFORMATION_SCHEMA.COLUMNS r
+      WHERE r.TABLE_NAME = 'DimDate'
+        AND r.COLUMN_NAME = 'RelativeBusinessDays_' + c.COLUMN_NAME
+  );
+
 
 -- Execute the dynamic SQL
 EXEC sp_executesql @HolidayRelativeBusinessDaysSQL, N'@TodayDate DATE', @TodayDate = @TodayDate;
