@@ -41,6 +41,145 @@ BEGIN
 
     TRUNCATE TABLE dbo.DimDate;
 
+
+    INSERT INTO dbo.DimDate (
+    DimDate_SK,
+    Date,
+    CalendarYear,
+    Month,
+    Day,
+    MonthName,
+    MonthShortName,
+    MonthAndCalendarYear,
+    DayName,
+    CalendarQuarter,
+    CalendarHalf,
+    MonthStart,
+    CalendarQuarterStart,
+    CalendarHalfStart,
+    WeekStartMonday,
+    WeekStartSunday,
+    UnixStartOfDay,
+    UnixEndOfDay,
+    FiscalYear,
+    FiscalHalf,
+    FiscalQuarter,
+    FiscalYearStart,
+    FiscalHalfStart,
+    RelativeCalendarYear,
+    RelativeMonth,
+    RelativeDay,
+    RelativeCalendarQuarter,
+    RelativeCalendarHalf,
+    RelativeFiscalYear,
+    RelativeFiscalHalf,
+    RelativeFiscalQuarter,
+    RelativeWeekStartMonday,
+    RelativeWeekStartSunday,
+    IsEndOfMonth,
+    IsWeekday,
+    IsWeekend,
+    IsMTDToday,
+    IsMTDYesterday,
+    IsYTDToday,
+    IsYTDYesterday,
+    IsFiscalYTDToday,
+    IsFiscalYTDYesterday
+    -- Holiday_* and RelativeBusinessDays_* columns also set to 0
+)
+
+VALUES
+(
+    -1,                -- DimDate_SK
+    '0001-01-01',      -- Date
+    0,                 -- CalendarYear
+    0,                 -- Month
+    0,                 -- Day
+    'NA',              -- MonthName
+    'NA',              -- MonthShortName
+    'NA',              -- MonthAndCalendarYear
+    'NA',              -- DayName
+    0,                 -- CalendarQuarter
+    0,                 -- CalendarHalf
+    NULL,              -- MonthStart
+    NULL,              -- CalendarQuarterStart
+    NULL,              -- CalendarHalfStart
+    NULL,              -- WeekStartMonday
+    NULL,              -- WeekStartSunday
+    0,                 -- UnixStartOfDay
+    0,                 -- UnixEndOfDay
+    0,                 -- FiscalYear
+    0,                 -- FiscalHalf
+    0,                 -- FiscalQuarter
+    NULL,              -- FiscalYearStart
+    NULL,              -- FiscalHalfStart
+    0,                 -- RelativeCalendarYear
+    0,                 -- RelativeMonth
+    0,                 -- RelativeDay
+    0,                 -- RelativeCalendarQuarter
+    0,                 -- RelativeCalendarHalf
+    0,                 -- RelativeFiscalYear
+    0,                 -- RelativeFiscalHalf
+    0,                 -- RelativeFiscalQuarter
+    0,                 -- RelativeWeekStartMonday
+    0,                 -- RelativeWeekStartSunday
+    0,                 -- IsEndOfMonth
+    0,                 -- IsWeekday
+    0,                 -- IsWeekend
+    0,                 -- IsMTDToday
+    0,                 -- IsMTDYesterday
+    0,                 -- IsYTDToday
+    0,                 -- IsYTDYesterday
+    0,                 -- IsFiscalYTDToday
+    0                  -- IsFiscalYTDYesterday
+),
+(
+    99991231,          -- DimDate_SK
+    '9999-12-31',      -- Date
+    0,                 -- CalendarYear
+    0,                 -- Month
+    0,                 -- Day
+    'NA',              -- MonthName
+    'NA',              -- MonthShortName
+    'NA',              -- MonthAndCalendarYear
+    'NA',              -- DayName
+    0,                 -- CalendarQuarter
+    0,                 -- CalendarHalf
+    NULL,              -- MonthStart
+    NULL,              -- CalendarQuarterStart
+    NULL,              -- CalendarHalfStart
+    NULL,              -- WeekStartMonday
+    NULL,              -- WeekStartSunday
+    0,                 -- UnixStartOfDay
+    0,                 -- UnixEndOfDay
+    0,                 -- FiscalYear
+    0,                 -- FiscalHalf
+    0,                 -- FiscalQuarter
+    NULL,              -- FiscalYearStart
+    NULL,              -- FiscalHalfStart
+    0,                 -- RelativeCalendarYear
+    0,                 -- RelativeMonth
+    0,                 -- RelativeDay
+    0,                 -- RelativeCalendarQuarter
+    0,                 -- RelativeCalendarHalf
+    0,                 -- RelativeFiscalYear
+    0,                 -- RelativeFiscalHalf
+    0,                 -- RelativeFiscalQuarter
+    0,                 -- RelativeWeekStartMonday
+    0,                 -- RelativeWeekStartSunday
+    0,                 -- IsEndOfMonth
+    0,                 -- IsWeekday
+    0,                 -- IsWeekend
+    0,                 -- IsMTDToday
+    0,                 -- IsMTDYesterday
+    0,                 -- IsYTDToday
+    0,                 -- IsYTDYesterday
+    0,                 -- IsFiscalYTDToday
+    0                  -- IsFiscalYTDYesterday
+    -- Holiday_* and RelativeBusinessDays_* columns also set to 0
+);
+
+
     ;WITH DateSequence AS (
         SELECT CAST(@MinimumDate AS DATE) AS TheDate
         UNION ALL
@@ -69,7 +208,7 @@ BEGIN
         RelativeWeekStartMonday, RelativeWeekStartSunday,
 
         -- Flags
-        IsWeekday, IsWeekend,
+        IsEndOfMonth, IsWeekday, IsWeekend,
         IsMTDToday, IsMTDYesterday,
         IsYTDToday, IsYTDYesterday,
         IsFiscalYTDToday, IsFiscalYTDYesterday
@@ -169,6 +308,7 @@ BEGIN
         ),
 
         -- Flags
+        isEndOfMonth    = case when eomonth(TheDate) = TheDate then 1 else 0 end,
         IsWeekday        = CASE WHEN DATENAME(WEEKDAY, TheDate) NOT IN ('Saturday','Sunday') THEN 1 ELSE 0 END,
         IsWeekend        = CASE WHEN DATENAME(WEEKDAY, TheDate) IN ('Saturday','Sunday') THEN 1 ELSE 0 END,
         IsMTDToday       = CASE WHEN DAY(TheDate) <= DAY(@TodayDate) THEN 1 ELSE 0 END,

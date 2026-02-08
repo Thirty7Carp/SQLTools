@@ -1,3 +1,5 @@
+
+
 SET ANSI_NULLS ON;
 GO
 
@@ -42,6 +44,7 @@ CREATE TABLE dbo.DimDate (
     RelativeFiscalQuarter INT NULL,
     RelativeWeekStartMonday INT NULL,
     RelativeWeekStartSunday INT NULL,
+    isEndOfMonth bit NULL,
     IsWeekday BIT NULL,
     IsWeekend BIT NULL,
     IsMTDToday BIT NULL,
