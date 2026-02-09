@@ -16,7 +16,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-alter PROCEDURE [dbo].[loadDimDate]
+create PROCEDURE [dbo].[loadDimDate]
     @FiscalYearStartMMDD CHAR(4) = '0701',
     @MinimumDate date = '1800-01-01',
     @MaximumDate DATE = '2099-12-31',
@@ -313,18 +313,26 @@ VALUES
         IsWeekend        = CASE WHEN DATENAME(WEEKDAY, TheDate) IN ('Saturday','Sunday') THEN 1 ELSE 0 END,
         IsMTDToday       = CASE WHEN DAY(TheDate) <= DAY(@TodayDate) THEN 1 ELSE 0 END,
         IsMTDYesterday   = CASE WHEN DAY(TheDate) <= DAY(@YesterdayDate) THEN 1 ELSE 0 END,
-        IsYTDToday       = CASE WHEN TheDate <= @TodayDate AND YEAR(TheDate) = YEAR(@TodayDate) THEN 1 ELSE 0 END,
-        IsYTDYesterday   = CASE WHEN TheDate <= @YesterdayDate AND YEAR(TheDate) = YEAR(@YesterdayDate) THEN 1 ELSE 0 END,
+        IsYTDToday       = CASE WHEN FORMAT(TheDate, 'MMdd') <= FORMAT(@TodayDate, 'MMdd') THEN 1 ELSE 0 END,
+        IsYTDYesterday   = CASE WHEN FORMAT(TheDate, 'MMdd') <= FORMAT(@YesterdayDate, 'MMdd') THEN 1 ELSE 0 END,
 
         -- Correct fiscal YTD flags: only dates between current fiscal year start and today/yesterday
-        IsFiscalYTDToday = CASE 
-                               WHEN TheDate >= @CurrentFiscalYearStart 
-                                    AND TheDate <= @TodayDate 
-                               THEN 1 ELSE 0 END,
+         IsFiscalYTDToday = 
+            CASE 
+            WHEN @FiscalYearStartMMDD = FORMAT(@TodayDate, 'MMdd') THEN 1
+            WHEN FORMAT(@TodayDate, 'MMdd') > @FiscalYearStartMMDD THEN
+                CASE WHEN FORMAT(TheDate, 'MMdd') >= @FiscalYearStartMMDD AND FORMAT(TheDate, 'MMdd') <= FORMAT(@TodayDate, 'MMdd') THEN 1 ELSE 0 END
+            ELSE
+                CASE WHEN FORMAT(TheDate, 'MMdd') >= @FiscalYearStartMMDD OR FORMAT(TheDate, 'MMdd') <= FORMAT(@TodayDate, 'MMdd') THEN 1 ELSE 0 END
+            END,
+
         IsFiscalYTDYesterday = CASE 
-                                   WHEN TheDate >= @CurrentFiscalYearStart 
-                                        AND TheDate <= @YesterdayDate 
-                                   THEN 1 ELSE 0 END
+            WHEN @FiscalYearStartMMDD = FORMAT(@YesterdayDate, 'MMdd') THEN 0
+            WHEN FORMAT(@YesterdayDate, 'MMdd') > @FiscalYearStartMMDD THEN
+                CASE WHEN FORMAT(TheDate, 'MMdd') >= @FiscalYearStartMMDD AND FORMAT(TheDate, 'MMdd') <= FORMAT(@YesterdayDate, 'MMdd') THEN 1 ELSE 0 END
+            ELSE
+                CASE WHEN FORMAT(TheDate, 'MMdd') >= @FiscalYearStartMMDD OR FORMAT(TheDate, 'MMdd') <= FORMAT(@YesterdayDate, 'MMdd') THEN 1 ELSE 0 END
+            END
     FROM DateSequence
     OPTION (MAXRECURSION 0);
 
