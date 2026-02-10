@@ -16,6 +16,8 @@ Run Steps
 	LoadForeignKeyDefinitions - Create and Run
 	updateObjectDefinitions_RemoveComments - Create and Run
 
+NOW BUILD THE PARSER!
+
 */
 
 
