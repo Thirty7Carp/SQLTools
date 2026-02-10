@@ -1,19 +1,20 @@
 
-create PROCEDURE [dbo].[updateObjectDefinitions_RemoveComments]
+alter PROCEDURE [dbo].[updateObjectDefinitions_RemoveComments]
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @id INT, @sql NVARCHAR(MAX);
     DECLARE @DatabaseName NVARCHAR(128);
+    Declare @SchemaName nvarchar(128);
     DECLARE @start INT, @end INT, @depth INT;
 
     DECLARE cur CURSOR FOR
-        SELECT DatabaseName, ObjectID, [ObjectDefinition]
+        SELECT DatabaseName, SchemaName, ObjectID, [ObjectDefinition]
         FROM dbo.ObjectDefinitions;
 
     OPEN cur;
-    FETCH NEXT FROM cur INTO @DatabaseName, @id, @sql;
+    FETCH NEXT FROM cur INTO @DatabaseName, @SchemaName, @id, @sql;
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
@@ -79,12 +80,14 @@ BEGIN
         -------------------------------------------------------------------
         UPDATE dbo.ObjectDefinitions
         SET [ObjectDefinition] = @sql
-        WHERE ObjectID = @id;
+        WHERE 
+            DatabaseName = @DatabaseName
+            and ObjectID = @id;
 
         -- Print confirmation in requested format
-        PRINT 'Cleaned Comments on ' + @DatabaseName + '.' + CAST(@id AS VARCHAR);
+        PRINT 'Cleaned Comments on ' + @DatabaseName + '.' + @SchemaName + '.' + CAST(@id AS VARCHAR);
 
-        FETCH NEXT FROM cur INTO @DatabaseName, @id, @sql;
+        FETCH NEXT FROM cur INTO @DatabaseName, @SchemaName, @id, @sql;
     END
 
     CLOSE cur;

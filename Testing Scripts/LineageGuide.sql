@@ -43,3 +43,4 @@ END;
     select top 100 * from  dbo.ObjectAll;
 	select top 100 * from  dbo.ObjectColumns; 
 	select top 100 * from  dbo.ObjectDefinitions;
+	select top 100 * from  dbo.ObjectDefinitions Where ObjectType like 'SQL_STORED_PROCEDURE';
