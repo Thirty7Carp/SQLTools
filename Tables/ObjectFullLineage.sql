@@ -1,5 +1,4 @@
-USE [Meta]
-GO
+
 
 /****** Object:  Table [dbo].[ObjectFullLineage]    Script Date: 22/01/2026 6:43:33 PM ******/
 SET ANSI_NULLS ON

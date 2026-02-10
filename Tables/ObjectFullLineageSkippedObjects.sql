@@ -1,11 +1,4 @@
-USE [Meta]
-GO
 
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
 
 create TABLE [dbo].[ObjectFullLineageSkippedObjects](
 	[RootDatabaseName] [varchar](255) NULL,

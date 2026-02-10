@@ -1,13 +1,3 @@
-USE [Meta]
-GO
-
-/****** Object:  Table [dbo].[ObjectToObjectByProcess]    Script Date: 22/01/2026 6:48:10 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 create TABLE [dbo].[ObjectToObjectByProcess](
 
 	[SourceDatabaseName] [varchar](255) NULL,

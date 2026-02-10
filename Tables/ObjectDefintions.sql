@@ -1,12 +1,4 @@
-USE [Meta]
-GO
 
-/****** Object:  Table [dbo].[ObjectDefinitions]    Script Date: 22/01/2026 6:43:02 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
 
 create TABLE [dbo].[ObjectDefinitions](
 	[DatabaseName] [nvarchar](128) NULL,

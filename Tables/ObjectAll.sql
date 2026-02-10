@@ -1,4 +1,3 @@
-USE [Meta]
 GO
 
 /****** Object:  Table [dbo].[ObjectAll]    Script Date: 22/01/2026 6:41:12 PM ******/

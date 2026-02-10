@@ -1,11 +1,3 @@
-USE [Meta]
-GO
-
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
 
 create PROCEDURE [dbo].[loadObjectColumns]
 AS
@@ -13,7 +5,7 @@ BEGIN
     SET NOCOUNT ON;
 
     -- Clear out the destination table before repopulating
-    TRUNCATE TABLE Meta.dbo.ObjectColumns;
+    TRUNCATE TABLE dbo.ObjectColumns;
 
     DECLARE
         @DatabaseName SYSNAME,
@@ -22,16 +14,17 @@ BEGIN
     -- Cursor only over DatabaseName
     DECLARE db_cursor CURSOR FOR
     SELECT DISTINCT DatabaseName
-    FROM [Meta].[dbo].[ObjectAll];
+    FROM [dbo].[ObjectAll];
 
     OPEN db_cursor;
     FETCH NEXT FROM db_cursor INTO @DatabaseName;
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        -- Build dynamic SQL to insert into Meta.dbo.ObjectColumns
+        declare @ObjectLoggingDatabase varchar(max) = 'Utility'
+        -- Build dynamic SQL to insert into dbo.ObjectColumns
         SET @SQL = '
-            INSERT INTO Meta.dbo.ObjectColumns (DatabaseName, TableName, ColumnName, ObjectID)
+            INSERT INTO '+@ObjectLoggingDatabase+'.dbo.ObjectColumns (DatabaseName, TableName, ColumnName, ObjectID)
             SELECT 
                    ''' + @DatabaseName + ''' AS DatabaseName,
                    o.name AS TableName,

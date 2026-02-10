@@ -1,12 +1,3 @@
-USE [Meta]
-GO
-
-/****** Object:  StoredProcedure [dbo].[loadObjectAll]    Script Date: 23/01/2026 2:35:21 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
 
 
 create PROCEDURE [dbo].[loadObjectAll]
