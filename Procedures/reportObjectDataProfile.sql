@@ -20,7 +20,7 @@ BEGIN
     );
 
     -- Metadata query with corrected type and length logic
-    DECLARE @MetaSQL NVARCHAR(MAX) = 
+    DECLARE @metadatasql NVARCHAR(MAX) = 
     'SELECT 
         ColumnNumber    = c.column_id,
         ColumnName      = c.name,
@@ -37,7 +37,7 @@ BEGIN
       AND TYPE_NAME(c.system_type_id) NOT IN (''xml'',''varbinary'',''image'',''geography'',''hierarchyid'');';
 
     INSERT INTO @Columns (ColumnNumber, ColumnName, ColumnType, ColumnPrecision, ColumnLength, ColumnScale)
-    EXEC (@MetaSQL);
+    EXEC (@metadatasql);
 
     CREATE TABLE #ColumnProfile (
         ColumnNumber INT,

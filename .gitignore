@@ -2,6 +2,8 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
+/.vs/SQLTools.slnx/v18/.wsuo
+/.vs
 /.vs/SQLTools.slnx/v18
 /.vs/VSWorkspaceState.json
 /.vs/slnx.sqlite
