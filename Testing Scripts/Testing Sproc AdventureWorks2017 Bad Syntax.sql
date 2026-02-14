@@ -64,7 +64,7 @@ BEGIN
                /* Nested: ProductSubcategory acts as bridge table */
             */
             INNER JOIN Production.ProductSubcategory psc ON p.ProductSubcategoryID = psc.ProductSubcategoryID
-            LEFT JOIN ProductCategory pc ON psc.ProductCategoryID = pc.ProductCategoryID  -- Category may be null
+            LEFT JOIN production.ProductCategory pc ON psc.ProductCategoryID = pc.ProductCategoryID  -- Category may be null
             INNER JOIN Sales.SalesOrderDetail sod ON p.ProductID = sod.ProductID  -- Sales transactions
             GROUP BY p.ProductID, p.Name, p.ProductNumber, pc.Name
             -- Filter to only include products with significant sales volume
@@ -157,7 +157,7 @@ BEGIN
                  *==============================================================*/
                 AND pst.TotalSales > 10000                           -- Revenue threshold (no schema)
                 AND soh.OrderDate >= '2013-01-01'                    -- Date filter (no schema)
-                AND Sales.SalesOrderDetail.OrderQty > 1              -- Quantity filter (with schema)
+                AND sod.OrderQty > 1              -- Quantity filter (with schema)
                 AND st.TerritoryID IS NOT NULL                       -- Exclude null territories
             
             -- Grouping clause for aggregation
@@ -443,6 +443,18 @@ BEGIN
         DROP TABLE #ProductSalesTemp;   -- First temp table
         DROP TABLE #FinalSalesTemp;     -- Second temp table
 
+        delete p
+        from person.Person p
+
+        insert into dbo.ErrorLog
+        values
+        (getdate(), 'TEST', 123456789, null, null, null, null, 'ERROR')
+
+        Update dl
+        set dl.PostTime = getdate()
+        from dbo.DatabaseLog dl
+
+
         /*======================================================================
          * ROLLBACK TRANSACTION
          * This ensures NO permanent changes to the database
@@ -486,6 +498,7 @@ BEGIN
         -- Re-throw the error to caller
         RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
     END CATCH
+
 END;
 GO
 
