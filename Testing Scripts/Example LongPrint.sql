@@ -2,9 +2,10 @@ DECLARE @sql VARCHAR(MAX)
 -- User pastes their SELECT statement here
 SET @sql = 
     (
-    SELECT ObjectDefinition 
-    FROM dbo.ObjectDefinitions 
-    WHERE objectName = 'reportObjectDataProfile'
+   
+   --[YOUR QUERY THAT RETURNS ONE ROW HERE]
+
+
     )
 
-EXEC dbo.reportLongPrint @sql = @sql
+EXEC common.outputLongPrint @sql = @sql

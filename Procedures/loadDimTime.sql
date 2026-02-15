@@ -1,13 +1,13 @@
-CREATE PROCEDURE dbo.loadDimTime
+CREATE PROCEDURE Common.loadDimTime
 AS
 BEGIN
     SET NOCOUNT ON;
 
     -- Clear existing data
-    TRUNCATE TABLE dbo.DimTime;
+    TRUNCATE TABLE Common.DimTime;
 
     -- Insert placeholder row for NULL time values
-    INSERT INTO dbo.DimTime
+    INSERT INTO Common.DimTime
     (
         DimTime_SK, Time, Second, Minute, Hour24, Hour12, AMPM,
         Interval24_Second, Interval24_Minute, Interval24_5Min, Interval24_QuarterHour, Interval24_HalfHour, Interval24_Hour,
@@ -48,7 +48,7 @@ BEGIN
         DECLARE @Interval12_HalfHour TIME(0) = CAST(CONCAT(FORMAT(@Hour12,'00'), ':', FORMAT((@MinuteNum/30)*30,'00'), ':00') AS TIME(0));
         DECLARE @Interval12_Hour TIME(0) = CAST(CONCAT(FORMAT(@Hour12,'00'), ':00:00') AS TIME(0));
 
-        INSERT INTO dbo.DimTime
+        INSERT INTO Common.DimTime
         (
             DimTime_SK, Time, Second, Minute, Hour24, Hour12, AMPM,
             Interval24_Second, Interval24_Minute, Interval24_5Min, Interval24_QuarterHour, Interval24_HalfHour, Interval24_Hour,

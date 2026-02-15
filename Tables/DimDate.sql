@@ -1,16 +1,8 @@
-
-
-SET ANSI_NULLS ON;
-GO
-
-SET QUOTED_IDENTIFIER ON;
-GO
-
 DECLARE @sql NVARCHAR(MAX);
 
 -- Base create table script
 SET @sql = '
-CREATE TABLE dbo.DimDate (
+CREATE TABLE Common.DimDate (
     DimDate_SK INT NOT NULL,
     Date DATE NULL,
     CalendarYear INT NULL,
@@ -62,12 +54,12 @@ WITH HolidayFlags AS (
         HasBusinessDays = CASE 
                              WHEN EXISTS (
                                  SELECT 1 
-                                 FROM dbo.PublicHoliday ph2
+                                 FROM Common.PublicHoliday ph2
                                  WHERE ph2.PublicHolidayType = ph.PublicHolidayType
                                    AND ph2.CountBusinessDays = 1
                              ) THEN 1 ELSE 0 
                           END
-    FROM dbo.PublicHoliday ph
+    FROM Common.PublicHoliday ph
     GROUP BY ph.PublicHolidayType
 )
 SELECT @sql = @sql + '
@@ -92,8 +84,8 @@ SET @sql = LEFT(@sql, LEN(@sql)-1) + '
 
  -- Index on IsWeekend for faster filtering of weekdays vs weekends
 CREATE NONCLUSTERED INDEX IX_DimDate_IsWeekend
-ON dbo.DimDate (IsWeekend);
+ON Common.DimDate (IsWeekend);
 
 -- Index on Date for faster lookups and range queries
 CREATE NONCLUSTERED INDEX IX_DimDate_Date
-ON dbo.DimDate ([Date]);
+ON Common.DimDate ([Date]);

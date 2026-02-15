@@ -9,12 +9,12 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 -- Clear existing WA State holidays (optional - comment out if you want to keep existing data)
--- DELETE FROM dbo.PublicHoliday WHERE PublicHolidayType = 'AustraliaWA';
+-- DELETE FROM Common.PublicHoliday WHERE PublicHolidayType = 'AustraliaWA';
 
-Truncate table dbo.PublicHoliday
+Truncate table Common.PublicHoliday
 
 -- 2020 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20200101, 'AustraliaWA', 'New Year''s Day', 0),
 (20200127, 'AustraliaWA', 'Australia Day', 0),
 (20200302, 'AustraliaWA', 'Labour Day', 0),
@@ -29,7 +29,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20201228, 'AustraliaWA', 'Boxing Day', 1); -- substitute (Boxing Day fell on Saturday)
 
 -- 2021 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20210101, 'AustraliaWA', 'New Year''s Day', 0),
 (20210126, 'AustraliaWA', 'Australia Day', 0),
 (20210301, 'AustraliaWA', 'Labour Day', 0),
@@ -45,7 +45,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20211228, 'AustraliaWA', 'Boxing Day', 1); -- substitute (Boxing Day fell on Sunday)
 
 -- 2022 Holidays (Easter Sunday became a public holiday from 2022, Queen's Birthday renamed to King's Birthday)
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20220101, 'AustraliaWA', 'New Year''s Day', 0),
 (20220103, 'AustraliaWA', 'New Year''s Day', 1), -- substitute (New Year fell on Saturday)
 (20220126, 'AustraliaWA', 'Australia Day', 0),
@@ -63,7 +63,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20221227, 'AustraliaWA', 'Boxing Day', 1); -- substitute (Boxing Day fell on Monday)
 
 -- 2023 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20230101, 'AustraliaWA', 'New Year''s Day', 0),
 (20230102, 'AustraliaWA', 'New Year''s Day', 1), -- substitute (New Year fell on Sunday)
 (20230126, 'AustraliaWA', 'Australia Day', 0),
@@ -78,7 +78,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20231226, 'AustraliaWA', 'Boxing Day', 0);
 
 -- 2024 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20240101, 'AustraliaWA', 'New Year''s Day', 0),
 (20240126, 'AustraliaWA', 'Australia Day', 0),
 (20240304, 'AustraliaWA', 'Labour Day', 0),
@@ -92,7 +92,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20241226, 'AustraliaWA', 'Boxing Day', 0);
 
 -- 2025 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20250101, 'AustraliaWA', 'New Year''s Day', 0),
 (20250127, 'AustraliaWA', 'Australia Day', 1), -- substitute (Australia Day fell on Sunday)
 (20250303, 'AustraliaWA', 'Labour Day', 0),
@@ -106,7 +106,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20251226, 'AustraliaWA', 'Boxing Day', 0);
 
 -- 2026 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20260101, 'AustraliaWA', 'New Year''s Day', 0),
 (20260126, 'AustraliaWA', 'Australia Day', 0),
 (20260302, 'AustraliaWA', 'Labour Day', 0),
@@ -122,7 +122,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20261228, 'AustraliaWA', 'Boxing Day', 1); -- substitute (Boxing Day fell on Saturday)
 
 -- 2027 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20270101, 'AustraliaWA', 'New Year''s Day', 0),
 (20270126, 'AustraliaWA', 'Australia Day', 0),
 (20270301, 'AustraliaWA', 'Labour Day', 0),
@@ -139,7 +139,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20271228, 'AustraliaWA', 'Boxing Day', 1); -- substitute (Boxing Day fell on Sunday)
 
 -- 2028 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20280101, 'AustraliaWA', 'New Year''s Day', 0),
 (20280103, 'AustraliaWA', 'New Year''s Day', 1), -- substitute (New Year fell on Saturday)
 (20280126, 'AustraliaWA', 'Australia Day', 0),
@@ -154,7 +154,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20281226, 'AustraliaWA', 'Boxing Day', 0);
 
 -- 2029 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20290101, 'AustraliaWA', 'New Year''s Day', 0),
 (20290126, 'AustraliaWA', 'Australia Day', 0),
 (20290305, 'AustraliaWA', 'Labour Day', 0),
@@ -168,7 +168,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20291226, 'AustraliaWA', 'Boxing Day', 0);
 
 -- 2030 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20300101, 'AustraliaWA', 'New Year''s Day', 0),
 (20300128, 'AustraliaWA', 'Australia Day', 1), -- substitute (Australia Day fell on Saturday)
 (20300304, 'AustraliaWA', 'Labour Day', 0),
@@ -182,7 +182,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20301226, 'AustraliaWA', 'Boxing Day', 0);
 
 -- 2031 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20310101, 'AustraliaWA', 'New Year''s Day', 0),
 (20310127, 'AustraliaWA', 'Australia Day', 1), -- substitute (Australia Day fell on Sunday)
 (20310303, 'AustraliaWA', 'Labour Day', 0),
@@ -196,7 +196,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20311226, 'AustraliaWA', 'Boxing Day', 0);
 
 -- 2032 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20320101, 'AustraliaWA', 'New Year''s Day', 0),
 (20320126, 'AustraliaWA', 'Australia Day', 0),
 (20320301, 'AustraliaWA', 'Labour Day', 0),
@@ -213,7 +213,7 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 (20321228, 'AustraliaWA', 'Boxing Day', 1); -- substitute (Boxing Day fell on Sunday)
 
 -- 2033 Holidays
-INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
+INSERT INTO Common.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName, PublicHolidaySubstitute) VALUES
 (20330101, 'AustraliaWA', 'New Year''s Day', 0),
 (20330103, 'AustraliaWA', 'New Year''s Day', 1), -- substitute (New Year fell on Saturday)
 (20330126, 'AustraliaWA', 'Australia Day', 0),
@@ -238,17 +238,17 @@ INSERT INTO dbo.PublicHoliday (DimDate_SK, PublicHolidayType, PublicHolidayName,
 , (20280605, 'CountryStateFF', 'Western Australia Day', 1)
 , (20291226, 'CountryStateFF', 'Boxing Day', 0)
 , (20331227, 'CountryStateFF', 'Boxing Day', 1) -- substitute (Boxing Day fell on Monday)
-, (20220126, 'CountryStateFF', 'Australia Day', 0),
+, (20220126, 'CountryStateFF', 'Australia Day', 0)
 
 /* Update to the CountBusinessDays holidays value */
 Update ph
 set ph.CountBusinessDays = 1
-from dbo.PublicHoliday ph
+from Common.PublicHoliday ph
 where ph.PublicHolidayType = 'AustraliaWA'
 
 
 
 Update ph
 set ph.CountBusinessDays = 1
-from dbo.PublicHoliday ph
+from Common.PublicHoliday ph
 where ph.PublicHolidayType = 'CountryStateFF'

@@ -1,4 +1,4 @@
-CREATE TABLE dbo.DimTime
+CREATE TABLE Common.DimTime
 (
     DimTime_SK              BIGINT       NOT NULL PRIMARY KEY, -- Surrogate Key
     Time                    TIME(0)      NOT NULL,             -- Full time value (HH:MM:SS)

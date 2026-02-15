@@ -1,4 +1,4 @@
-﻿create PROCEDURE dbo.reportLongPrint
+﻿Create PROCEDURE Common.outputLongPrint
     @sql VARCHAR(MAX)
 AS
 BEGIN
