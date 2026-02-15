@@ -1,4 +1,4 @@
-create PROCEDURE dbo.reportObjectDataProfile
+create PROCEDURE Utility.outputObjectDataProfile
     @ObjectName NVARCHAR(300)   -- e.g. 'AdventureWorks2017.Person.Person'
 AS
 BEGIN
