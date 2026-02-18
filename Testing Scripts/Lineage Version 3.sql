@@ -21,14 +21,6 @@ Compatible with: SQL Server 2016+
 -- ============================================================================
 -- 1. CREATE CENTRAL REPOSITORY DATABASE (Optional - for storing results)
 -- ============================================================================
-IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = 'SQLTools')
-BEGIN
-    CREATE DATABASE SQLTools;
-END
-GO
-
-USE SQLTools;
-GO
 
 -- Create Utility schema if it doesn't exist
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'Utility')
@@ -179,32 +171,42 @@ BEGIN
     SET NOCOUNT ON;
     
     DECLARE @SQL NVARCHAR(MAX);
+    DECLARE @CursorSQL NVARCHAR(MAX);
     DECLARE @DatabaseName NVARCHAR(128);
-    
+    DECLARE @UtilitySchemaDatabase sysname = 'SQLTools';
+
     -- Clear existing data
     TRUNCATE TABLE Utility.LineageObjectList;
-    
-    -- Cursor to iterate through all accessible databases
-    DECLARE db_cursor CURSOR FOR
-    SELECT d.name 
-    FROM sys.databases d
-    WHERE d.state_desc = 'ONLINE' 
-        AND HAS_DBACCESS(d.name) = 1
-        AND NOT EXISTS (
-            SELECT 1 FROM SQLTools.Utility.LineageDatabaseExclusions de
-            WHERE de.IsActive = 1
-                AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
-                AND d.name LIKE de.DatabaseName
-        );
-    
+
+
+    SET @CursorSQL = N'
+        DECLARE db_cursor CURSOR FOR
+        SELECT d.name 
+        FROM sys.databases d
+        WHERE d.state_desc = ''ONLINE'' 
+            AND HAS_DBACCESS(d.name) = 1
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageDatabaseExclusions de
+                WHERE de.IsActive = 1
+                    AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
+                    AND d.name LIKE de.DatabaseName
+            );
+    ';
+
+    EXEC sys.sp_executesql @CursorSQL;
+
     OPEN db_cursor;
     FETCH NEXT FROM db_cursor INTO @DatabaseName;
     
     WHILE @@FETCH_STATUS = 0
     BEGIN
         BEGIN TRY
+            --------------------------------------------------------------------
+            -- Build dynamic SQL for object list extraction
+            --------------------------------------------------------------------
             SET @SQL = N'
-            INSERT INTO SQLTools.Utility.LineageObjectList 
+            INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageObjectList 
                 (ServerName, DatabaseName, SchemaName, ObjectName, ObjectType, ObjectTypeName, CreateDate, ModifyDate)
             SELECT 
                 @@SERVERNAME AS ServerName,
@@ -232,9 +234,10 @@ BEGIN
                 ''FT'', -- Assembly (CLR) Table Function
                 ''SO''  -- Sequence Object
             )
-            AND o.is_ms_shipped = 0;';
-            
-            EXEC sp_executesql @SQL;
+            AND o.is_ms_shipped = 0;
+            ';
+
+            EXEC sys.sp_executesql @SQL;
         END TRY
         BEGIN CATCH
             PRINT 'Error processing database: ' + @DatabaseName;
@@ -247,13 +250,16 @@ BEGIN
     CLOSE db_cursor;
     DEALLOCATE db_cursor;
     
-    SELECT COUNT(*) AS TotalObjectsCaptured FROM Utility.LineageObjectList;
+    SELECT COUNT(*) AS TotalObjectsCaptured 
+    FROM Utility.LineageObjectList;
 END
 GO
+
 
 -- ============================================================================
 -- 4. STORED PROCEDURE: Capture All Dependencies
 -- ============================================================================
+
 
 CREATE OR ALTER PROCEDURE Utility.loadLineageObjectDirectDependency
 AS
@@ -261,35 +267,41 @@ BEGIN
     SET NOCOUNT ON;
     
     DECLARE @SQL NVARCHAR(MAX);
+    DECLARE @CursorSQL NVARCHAR(MAX);
     DECLARE @DatabaseName NVARCHAR(128);
-    
+    DECLARE @UtilitySchemaDatabase sysname = 'SQLTools';
+
     -- Clear existing dependencies
     TRUNCATE TABLE Utility.LineageObjectDirectDependency;
-    
-    -- Cursor to iterate through all accessible databases
-    DECLARE db_cursor CURSOR FOR
-    SELECT d.name 
-    FROM sys.databases d
-    WHERE d.state_desc = 'ONLINE' 
-        AND HAS_DBACCESS(d.name) = 1
-        AND NOT EXISTS (
-            SELECT 1 FROM SQLTools.Utility.LineageDatabaseExclusions de
-            WHERE de.IsActive = 1
-                AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
-                AND d.name LIKE de.DatabaseName
-        );
-    
+
+    SET @CursorSQL = N'
+        DECLARE db_cursor CURSOR FOR
+        SELECT d.name 
+        FROM sys.databases d
+        WHERE d.state_desc = ''ONLINE'' 
+            AND HAS_DBACCESS(d.name) = 1
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageDatabaseExclusions de
+                WHERE de.IsActive = 1
+                    AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
+                    AND d.name LIKE de.DatabaseName
+            );
+    ';
+
+    EXEC sys.sp_executesql @CursorSQL;
+
     OPEN db_cursor;
     FETCH NEXT FROM db_cursor INTO @DatabaseName;
     
     WHILE @@FETCH_STATUS = 0
     BEGIN
         BEGIN TRY
+            --------------------------------------------------------------------
+            -- Build dynamic SQL for dependency extraction
+            --------------------------------------------------------------------
             SET @SQL = N'
-            -- Capture dependencies using sys.sql_expression_dependencies
-            -- NOTE: Handles database..object syntax (SQL Server resolves to default schema)
-            -- Also captures cross-server dependencies via linked servers
-            INSERT INTO SQLTools.Utility.LineageObjectDirectDependency
+            INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageObjectDirectDependency
                 (SourceServer, SourceDatabase, SourceSchema, SourceObject, SourceType,
                  TargetServer, TargetDatabase, TargetSchema, TargetObject, TargetType,
                  DependencyType, IsSchemabound)
@@ -317,9 +329,8 @@ BEGIN
             LEFT JOIN [' + @DatabaseName + N'].sys.schemas ts ON ro.schema_id = ts.schema_id
             WHERE o.is_ms_shipped = 0
                 AND sed.referenced_entity_name IS NOT NULL;
-            
-            -- Also capture foreign key dependencies
-            INSERT INTO SQLTools.Utility.LineageObjectDirectDependency
+
+            INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageObjectDirectDependency
                 (SourceServer, SourceDatabase, SourceSchema, SourceObject, SourceType,
                  TargetServer, TargetDatabase, TargetSchema, TargetObject, TargetType,
                  DependencyType, IsSchemabound)
@@ -341,9 +352,12 @@ BEGIN
             INNER JOIN [' + @DatabaseName + N'].sys.schemas s ON t.schema_id = s.schema_id
             INNER JOIN [' + @DatabaseName + N'].sys.tables rt ON fk.referenced_object_id = rt.object_id
             INNER JOIN [' + @DatabaseName + N'].sys.schemas rs ON rt.schema_id = rs.schema_id
-            WHERE t.is_ms_shipped = 0;';
-            
+            WHERE t.is_ms_shipped = 0;
+            ';
+
+            --------------------------------------------------------------------
             -- Debug: Print SQL for first database only (to avoid spam)
+            --------------------------------------------------------------------
             IF @DatabaseName = 'AdventureWorks2017'
             BEGIN
                 PRINT '=== SQL TO BE EXECUTED FOR AdventureWorks2017 ===';
@@ -351,7 +365,7 @@ BEGIN
                 PRINT '=== END SQL ===';
             END
             
-            EXEC sp_executesql @SQL;
+            EXEC sys.sp_executesql @SQL;
         END TRY
         BEGIN CATCH
             PRINT 'Error processing dependencies for database: ' + @DatabaseName;
@@ -360,10 +374,16 @@ BEGIN
             PRINT 'Error Line: ' + CAST(ERROR_LINE() AS VARCHAR(10));
         END CATCH
         
+        --------------------------------------------------------------------
         -- Debug output: show progress
+        --------------------------------------------------------------------
         DECLARE @RowCount INT;
-        SELECT @RowCount = COUNT(*) FROM Utility.LineageObjectDirectDependency WHERE SourceDatabase = @DatabaseName;
-        PRINT 'Processed database: ' + @DatabaseName + ' - Dependencies captured: ' + CAST(@RowCount AS VARCHAR(10));
+        SELECT @RowCount = COUNT(*) 
+        FROM Utility.LineageObjectDirectDependency 
+        WHERE SourceDatabase = @DatabaseName;
+
+        PRINT 'Processed database: ' + @DatabaseName 
+              + ' - Dependencies captured: ' + CAST(@RowCount AS VARCHAR(10));
         
         FETCH NEXT FROM db_cursor INTO @DatabaseName;
     END
@@ -371,9 +391,11 @@ BEGIN
     CLOSE db_cursor;
     DEALLOCATE db_cursor;
     
-    SELECT COUNT(*) AS TotalDependenciesCaptured FROM Utility.LineageObjectDirectDependency;
+    SELECT COUNT(*) AS TotalDependenciesCaptured 
+    FROM Utility.LineageObjectDirectDependency;
 END
 GO
+
 
 -- ============================================================================
 -- 5. STORED PROCEDURE: Build Complete Lineage (Recursive)
@@ -548,33 +570,43 @@ BEGIN
     SET NOCOUNT ON;
     
     DECLARE @SQL NVARCHAR(MAX);
+    DECLARE @CursorSQL NVARCHAR(MAX);
     DECLARE @DatabaseName NVARCHAR(128);
+    DECLARE @UtilitySchemaDatabase sysname = 'SQLTools';
     
     -- Clear existing column lineage
     TRUNCATE TABLE Utility.LineageColumnDependency;
     
-    -- Cursor to iterate through all accessible databases
-    DECLARE db_cursor CURSOR FOR
-    SELECT d.name 
-    FROM sys.databases d
-    WHERE d.state_desc = 'ONLINE' 
-        AND HAS_DBACCESS(d.name) = 1
-        AND NOT EXISTS (
-            SELECT 1 FROM SQLTools.Utility.LineageDatabaseExclusions de
-            WHERE de.IsActive = 1
-                AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
-                AND d.name LIKE de.DatabaseName
-        );
-    
+
+    SET @CursorSQL = N'
+        DECLARE db_cursor CURSOR FOR
+        SELECT d.name 
+        FROM sys.databases d
+        WHERE d.state_desc = ''ONLINE'' 
+            AND HAS_DBACCESS(d.name) = 1
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageDatabaseExclusions de
+                WHERE de.IsActive = 1
+                    AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
+                    AND d.name LIKE de.DatabaseName
+            );
+    ';
+
+    EXEC sys.sp_executesql @CursorSQL;
+
     OPEN db_cursor;
     FETCH NEXT FROM db_cursor INTO @DatabaseName;
     
     WHILE @@FETCH_STATUS = 0
     BEGIN
         BEGIN TRY
+            --------------------------------------------------------------------
+            -- Build dynamic SQL for column-level lineage extraction
+            --------------------------------------------------------------------
             SET @SQL = N'
             -- Capture column-level dependencies from views
-            INSERT INTO SQLTools.Utility.LineageColumnDependency
+            INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageColumnDependency
                 (SourceServer, SourceDatabase, SourceSchema, SourceObject, SourceColumn,
                  TargetServer, TargetDatabase, TargetSchema, TargetObject, TargetColumn,
                  TransformationType)
@@ -598,9 +630,9 @@ BEGIN
             ) sed
             WHERE sed.referenced_minor_name IS NOT NULL
                 AND v.is_ms_shipped = 0;
-            
+
             -- Capture column-level dependencies from stored procedures and functions
-            INSERT INTO SQLTools.Utility.LineageColumnDependency
+            INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageColumnDependency
                 (SourceServer, SourceDatabase, SourceSchema, SourceObject, SourceColumn,
                  TargetServer, TargetDatabase, TargetSchema, TargetObject, TargetColumn,
                  TransformationType)
@@ -623,9 +655,10 @@ BEGIN
             ) sed
             WHERE o.type IN (''P'', ''FN'', ''IF'', ''TF'')
                 AND sed.referenced_minor_name IS NOT NULL
-                AND o.is_ms_shipped = 0;';
-            
-            EXEC sp_executesql @SQL;
+                AND o.is_ms_shipped = 0;
+            ';
+
+            EXEC sys.sp_executesql @SQL;
         END TRY
         BEGIN CATCH
             PRINT 'Error processing column lineage for database: ' + @DatabaseName;
@@ -638,9 +671,11 @@ BEGIN
     CLOSE db_cursor;
     DEALLOCATE db_cursor;
     
-    SELECT COUNT(*) AS TotalColumnLineageCaptured FROM Utility.LineageColumnDependency;
+    SELECT COUNT(*) AS TotalColumnLineageCaptured 
+    FROM Utility.LineageColumnDependency;
 END
 GO
+
 
 -- ============================================================================
 -- 7. VIEWS FOR EASY QUERYING
