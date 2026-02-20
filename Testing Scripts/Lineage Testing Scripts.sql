@@ -1,3 +1,17 @@
+/* Sample inserts to exclude stock databases */
+
+INSERT INTO Utility.LineageDatabaseExclusions (ServerName, DatabaseName, ExclusionReason)
+VALUES 
+    (@@SERVERNAME, 'master', 'System database'),
+    (@@SERVERNAME, 'tempdb', 'System database'),
+    (@@SERVERNAME, 'model', 'System database'),
+    (@@SERVERNAME, 'msdb', 'System database');
+
+
+/* Exclude all databases matching a pattern (e.g., all test databases) */
+EXEC Utility.alterLineageDatabaseExclusionsAdd
+    @DatabaseName = 'Test%',
+    @ExclusionReason = 'All test databases';
 
 -- ============================================================================
 -- 11. USAGE EXAMPLES
@@ -18,10 +32,7 @@ EXEC Utility.alterLineageDatabaseExclusionsAdd
     @DatabaseName = 'OldDatabase',
     @ExclusionReason = 'Deprecated database';
 
--- Exclude all databases matching a pattern (e.g., all test databases)
-EXEC Utility.alterLineageDatabaseExclusionsAdd
-    @DatabaseName = 'Test%',
-    @ExclusionReason = 'All test databases';
+
 
 -- Exclude a database on a specific server
 EXEC Utility.alterLineageDatabaseExclusionsAdd

@@ -1,0 +1,89 @@
+CREATE PROCEDURE Utility.loadLineageObjectList
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    DECLARE @SQL NVARCHAR(MAX);
+    DECLARE @CursorSQL NVARCHAR(MAX);
+    DECLARE @DatabaseName NVARCHAR(128);
+    DECLARE @UtilitySchemaDatabase sysname = 'SQLTools';
+
+    -- Clear existing data
+    TRUNCATE TABLE Utility.LineageObjectList;
+
+
+    SET @CursorSQL = N'
+        DECLARE db_cursor CURSOR FOR
+        SELECT d.name 
+        FROM sys.databases d
+        WHERE d.state_desc = ''ONLINE'' 
+            AND HAS_DBACCESS(d.name) = 1
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageDatabaseExclusions de
+                WHERE de.IsActive = 1
+                    AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
+                    AND d.name LIKE de.DatabaseName
+            );
+    ';
+
+    EXEC sys.sp_executesql @CursorSQL;
+
+    OPEN db_cursor;
+    FETCH NEXT FROM db_cursor INTO @DatabaseName;
+    
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        BEGIN TRY
+            --------------------------------------------------------------------
+            -- Build dynamic SQL for object list extraction
+            --------------------------------------------------------------------
+            SET @SQL = N'
+            INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageObjectList 
+                (ServerName, DatabaseName, SchemaName, ObjectName, ObjectType, ObjectTypeName, CreateDate, ModifyDate)
+            SELECT 
+                @@SERVERNAME AS ServerName,
+                ''' + @DatabaseName + N''' AS DatabaseName,
+                s.name AS SchemaName,
+                o.name AS ObjectName,
+                o.type AS ObjectType,
+                o.type_desc AS ObjectTypeName,
+                o.create_date AS CreateDate,
+                o.modify_date AS ModifyDate
+            FROM [' + @DatabaseName + N'].sys.objects o
+            INNER JOIN [' + @DatabaseName + N'].sys.schemas s ON o.schema_id = s.schema_id
+            WHERE o.type IN (
+                ''U'',  -- User Table
+                ''V'',  -- View
+                ''P'',  -- Stored Procedure
+                ''FN'', -- Scalar Function
+                ''IF'', -- Inline Table Function
+                ''TF'', -- Table Function
+                ''TR'', -- Trigger
+                ''SN'', -- Synonym
+                ''AF'', -- Aggregate Function
+                ''PC'', -- Assembly (CLR) Stored Procedure
+                ''FS'', -- Assembly (CLR) Scalar Function
+                ''FT'', -- Assembly (CLR) Table Function
+                ''SO''  -- Sequence Object
+            )
+            AND o.is_ms_shipped = 0;
+            ';
+
+            EXEC sys.sp_executesql @SQL;
+        END TRY
+        BEGIN CATCH
+            PRINT 'Error processing database: ' + @DatabaseName;
+            PRINT ERROR_MESSAGE();
+        END CATCH
+        
+        FETCH NEXT FROM db_cursor INTO @DatabaseName;
+    END
+    
+    CLOSE db_cursor;
+    DEALLOCATE db_cursor;
+    
+    SELECT COUNT(*) AS TotalObjectsCaptured 
+    FROM Utility.LineageObjectList;
+END
+GO
