@@ -1,5 +1,5 @@
 
-alter PROCEDURE [dbo].[updateObjectDefinitions_RemoveComments]
+create PROCEDURE [dbo].[updateObjectDefinitions_RemoveComments]
 AS
 BEGIN
     SET NOCOUNT ON;

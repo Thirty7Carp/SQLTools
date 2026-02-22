@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.alterLineageDatabaseExclusionsRemove
+CREATE PROCEDURE Utility.updateLineageDatabaseExclusionsRemove
     @ExclusionID BIGINT = NULL,
     @ServerName NVARCHAR(128) = NULL,
     @DatabaseName NVARCHAR(128) = NULL
