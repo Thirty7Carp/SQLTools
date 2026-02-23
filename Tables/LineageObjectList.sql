@@ -2,7 +2,7 @@ Drop table if exists Utility.LineageObjectList
 
 -- Store all database objects across all databases
 CREATE TABLE Utility.LineageObjectList (
-    ObjectID BIGINT IDENTITY(1,1) PRIMARY KEY,
+    ObjectID BIGINT,
     ServerName NVARCHAR(128) NOT NULL DEFAULT @@SERVERNAME,
     DatabaseName NVARCHAR(128) NOT NULL,
     SchemaName NVARCHAR(128) NOT NULL,

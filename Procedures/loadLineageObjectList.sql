@@ -40,8 +40,9 @@ BEGIN
             --------------------------------------------------------------------
             SET @SQL = N'
             INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageObjectList 
-                (ServerName, DatabaseName, SchemaName, ObjectName, ObjectType, ObjectTypeName, CreateDate, ModifyDate)
+                (ObjectID,ServerName, DatabaseName, SchemaName, ObjectName, ObjectType, ObjectTypeName, CreateDate, ModifyDate)
             SELECT 
+                o.object_id AS ObjectID,
                 @@SERVERNAME AS ServerName,
                 ''' + @DatabaseName + N''' AS DatabaseName,
                 s.name AS SchemaName,
