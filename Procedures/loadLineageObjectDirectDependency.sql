@@ -10,6 +10,8 @@ BEGIN
     DECLARE @UtilitySchemaDatabase sysname = 'SQLTools';
 
     -- Clear existing dependencies
+
+
     TRUNCATE TABLE Utility.LineageObjectDirectDependency;
 
     SET @CursorSQL = N'
@@ -128,8 +130,63 @@ BEGIN
     
     CLOSE db_cursor;
     DEALLOCATE db_cursor;
-    
-    SELECT COUNT(*) AS TotalDependenciesCaptured 
-    FROM Utility.LineageObjectDirectDependency;
+
+    declare @ServerforMerge varchar(max) = (select @@SERVERNAME)
+
+    Insert into Utility.LineageObjectDirectDependency
+        (
+        SourceServer
+        , SourceDatabase
+        , SourceSchema
+        , SourceObject
+        , SourceType
+        , TargetServer
+        , TargetDatabase
+        , TargetSchema
+        , TargetObject
+        , TargetType
+        , DependencyType
+        , IsSchemabound
+        , Level
+        )
+
+        select
+            SourceServer  = @ServerforMerge
+            , SourceDatabase = SourceDatabaseName
+            , SourceSchema = SourceSchemaName
+            , SourceObject = SourceObjectName
+            , SourceType = SourceObjectType
+            , TargetServer = @ServerforMerge
+            , TatargetDatabase = ProcessDatabaseName
+            , TargetSchema = ProcessSchemaName
+            , TargetObject = ProcessObjectName
+            , TargetType = ProcessObjectType
+            , DependencyType = 'Direct'
+            , [IsSchemabound] = 0
+            , [Level] = 1
+        from
+	        SQLTools.Utility.DynamicMerge
+
+        UNION ALL
+
+        select
+            SourceServer  = @ServerforMerge
+            , SourceDatabase = ProcessDatabaseName
+            , SourceSchema = ProcessSchemaName
+            , SourceObject = ProcessObjectName
+            , SourceType = ProcessObjectType
+            , TargetServer = @ServerforMerge
+            , TatargetDatabase = TargetDatabaseName
+            , TargetSchema = TargetSchemaName
+            , TargetObject = TargetObjectName
+            , TargetType = TargetObjectType
+            , DependencyType = 'Direct'
+            , [IsSchemabound] = 0
+            , [Level] = 1
+        from
+	        SQLTools.Utility.DynamicMerge
+  
+  ;
 END
 GO
+

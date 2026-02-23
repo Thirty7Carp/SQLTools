@@ -1,5 +1,4 @@
 declare @SourceServer varchar(max) = (select @@SERVERNAME)
-declare @TZOffsetMinutes int = 480
 
 select
 SourceServer  = @SourceServer
@@ -21,7 +20,6 @@ from
 
 UNION ALL
 
-
 select
 SourceServer  = ProcessServerName
 , SourceDatabase = ProcessDatabaseName
@@ -39,4 +37,5 @@ SourceServer  = ProcessServerName
 , CaptureDate = dateadd(n, @TZOffsetMinutes, getutcdate())
 from
 	SQLTools.Utility.DynamicMerge
+
 
