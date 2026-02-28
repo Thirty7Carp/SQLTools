@@ -57,18 +57,13 @@ BEGIN
                 ''U'',  -- User Table
                 ''V'',  -- View
                 ''P'',  -- Stored Procedure
+                ''SN'', -- Synonym
+                ''SO'',  -- Sequence Object
                 ''FN'', -- Scalar Function
                 ''IF'', -- Inline Table Function
                 ''TF'', -- Table Function
-                ''TR'', -- Trigger
-                ''SN'', -- Synonym
-                ''AF'', -- Aggregate Function
-                ''PC'', -- Assembly (CLR) Stored Procedure
-                ''FS'', -- Assembly (CLR) Scalar Function
-                ''FT'', -- Assembly (CLR) Table Function
-                ''SO''  -- Sequence Object
-                ''C''   -- Check constraints
-            )
+                ''TR'' -- Triggers
+                )
             AND o.is_ms_shipped = 0;
             ';
 

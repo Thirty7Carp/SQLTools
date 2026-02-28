@@ -43,6 +43,11 @@ WHERE NOT EXISTS (
         AND e.referenced_schema_name = p.TargetSchema
         AND e.referenced_entity_name = p.TargetObject
 )
+AND p.SourceObject NOT LIKE 'CK%'
+AND NOT (p.SourceServer = p.TargetServer
+    AND p.SourceDatabase = p.TargetDatabase
+    AND p.SourceSchema = p.TargetSchema
+    AND p.SourceObject = p.TargetObject)
 
 UNION ALL
 
@@ -91,6 +96,12 @@ WHERE NOT EXISTS (
         AND p.TargetSchema = e.referenced_schema_name
         AND p.TargetObject = e.referenced_entity_name
 )
+AND e.ReferencingObject NOT LIKE 'CK%'
+AND e.ReferencingObjectType IS NOT NULL
+AND NOT (e.ReferencingServer = e.referenced_server_name
+    AND e.ReferencingDatabase = e.referenced_database_name
+    AND e.ReferencingSchema = e.referenced_schema_name
+    AND e.ReferencingObject = e.referenced_entity_name)
 
 ORDER BY
     ComparisonResult,
