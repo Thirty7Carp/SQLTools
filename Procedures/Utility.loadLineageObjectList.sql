@@ -84,7 +84,6 @@ BEGIN
     CLOSE db_cursor;
     DEALLOCATE db_cursor;
     
-    SELECT COUNT(*) AS TotalObjectsCaptured 
-    FROM Utility.LineageObjectList;
+   ;
 END
 GO
