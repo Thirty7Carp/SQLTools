@@ -4,18 +4,32 @@ SELECT DISTINCT
     p.SourceDatabase,
     p.SourceSchema,
     p.SourceObject,
+    sol.ObjectTypeName AS SourceObjectType,
     p.OperationType,
     p.TargetServer,
     p.TargetDatabase,
     p.TargetSchema,
-    p.TargetObject
+    p.TargetObject,
+    tol.ObjectTypeName AS TargetObjectType,
+    CASE WHEN od.ObjectID IS NOT NULL THEN 1 ELSE 0 END AS IsInObjectDefinitions,
+    od.ObjectDefinition
 FROM
     Utility.LineageObjectParsedDependency p
-    INNER JOIN Utility.LineageObjectList ol
-        ON ol.ServerName = p.TargetServer
-        AND ol.DatabaseName = p.TargetDatabase
-        AND ol.SchemaName = p.TargetSchema
-        AND ol.ObjectName = p.TargetObject
+    INNER JOIN Utility.LineageObjectList tol
+        ON tol.ServerName = p.TargetServer
+        AND tol.DatabaseName = p.TargetDatabase
+        AND tol.SchemaName = p.TargetSchema
+        AND tol.ObjectName = p.TargetObject
+    LEFT JOIN Utility.LineageObjectList sol
+        ON sol.ServerName = p.SourceServer
+        AND sol.DatabaseName = p.SourceDatabase
+        AND sol.SchemaName = p.SourceSchema
+        AND sol.ObjectName = p.SourceObject
+    LEFT JOIN Utility.LineageObjectDefinitions od
+        ON od.ServerName = p.SourceServer
+        AND od.DatabaseName = p.SourceDatabase
+        AND od.SchemaName = p.SourceSchema
+        AND od.ObjectName = p.SourceObject
 WHERE NOT EXISTS (
     SELECT 1
     FROM Utility.LineageObjectExpressionDependency e
@@ -38,18 +52,32 @@ SELECT DISTINCT
     e.ReferencingDatabase,
     e.ReferencingSchema,
     e.ReferencingObject,
+    sol.ObjectTypeName AS SourceObjectType,
     NULL AS OperationType,
     e.referenced_server_name,
     e.referenced_database_name,
     e.referenced_schema_name,
-    e.referenced_entity_name
+    e.referenced_entity_name,
+    tol.ObjectTypeName AS TargetObjectType,
+    CASE WHEN od.ObjectID IS NOT NULL THEN 1 ELSE 0 END AS IsInObjectDefinitions,
+    od.ObjectDefinition
 FROM
     Utility.LineageObjectExpressionDependency e
-    INNER JOIN Utility.LineageObjectList ol
-        ON ol.ServerName = e.referenced_server_name
-        AND ol.DatabaseName = e.referenced_database_name
-        AND ol.SchemaName = e.referenced_schema_name
-        AND ol.ObjectName = e.referenced_entity_name
+    INNER JOIN Utility.LineageObjectList tol
+        ON tol.ServerName = e.referenced_server_name
+        AND tol.DatabaseName = e.referenced_database_name
+        AND tol.SchemaName = e.referenced_schema_name
+        AND tol.ObjectName = e.referenced_entity_name
+    LEFT JOIN Utility.LineageObjectList sol
+        ON sol.ServerName = e.ReferencingServer
+        AND sol.DatabaseName = e.ReferencingDatabase
+        AND sol.SchemaName = e.ReferencingSchema
+        AND sol.ObjectName = e.ReferencingObject
+    LEFT JOIN Utility.LineageObjectDefinitions od
+        ON od.ServerName = e.ReferencingServer
+        AND od.DatabaseName = e.ReferencingDatabase
+        AND od.SchemaName = e.ReferencingSchema
+        AND od.ObjectName = e.ReferencingObject
 WHERE NOT EXISTS (
     SELECT 1
     FROM Utility.LineageObjectParsedDependency p
@@ -70,5 +98,3 @@ ORDER BY
     SourceDatabase,
     SourceSchema,
     SourceObject;
-
-

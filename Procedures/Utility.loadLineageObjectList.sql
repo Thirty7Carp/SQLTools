@@ -67,6 +67,7 @@ BEGIN
                 ''FS'', -- Assembly (CLR) Scalar Function
                 ''FT'', -- Assembly (CLR) Table Function
                 ''SO''  -- Sequence Object
+                ''C''   -- Check constraints
             )
             AND o.is_ms_shipped = 0;
             ';
