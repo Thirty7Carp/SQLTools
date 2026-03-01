@@ -61,8 +61,7 @@ BEGIN
                 ''SO'',  -- Sequence Object
                 ''FN'', -- Scalar Function
                 ''IF'', -- Inline Table Function
-                ''TF'', -- Table Function
-                ''TR'' -- Triggers
+                ''TF'' -- Table Function           
                 )
             AND o.is_ms_shipped = 0;
             ';

@@ -18,6 +18,12 @@ BEGIN
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
+        -- Add space before semicolons
+        SET @sql = REPLACE(@sql, ';', ' ;');
+
+        -- Add space before commas
+        SET @sql = REPLACE(@sql, ',', ' ,');
+
         -- Replace tabs with a space
         SET @sql = REPLACE(@sql, CHAR(9), ' ');
 
