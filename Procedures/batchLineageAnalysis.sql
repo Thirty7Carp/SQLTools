@@ -19,10 +19,6 @@ PRINT 'Step 3: Removing Comments';
 PRINT '============================================================';
 EXEC Utility.updateLineageObjectDefinitions_RemoveComments;
 
-PRINT '============================================================';
-PRINT 'Step 4: Removing String Literals';
-PRINT '============================================================';
-EXEC Utility.updateLineageObjectDefinitions_RemoveStringLiterals;
 
 PRINT '============================================================';
 PRINT 'Step 5: Removing Whitespace';
