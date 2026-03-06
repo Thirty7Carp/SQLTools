@@ -21,12 +21,12 @@ EXEC Utility.updateLineageObjectDefinitions_RemoveComments;
 
 
 PRINT '============================================================';
-PRINT 'Step 5: Removing Whitespace';
+PRINT 'Step 4: Removing Whitespace';
 PRINT '============================================================';
 EXEC Utility.updateLineageObjectDefinitions_RemoveWhitespace;
 
 PRINT '============================================================';
-PRINT 'Step 6: Loading Expression Dependencies';
+PRINT 'Step 5: Loading Expression Dependencies';
 PRINT '============================================================';
 EXEC Utility.LoadLineageObjectExpressionDependency;
 SELECT @RowCount = COUNT(*) FROM Utility.LineageObjectExpressionDependency;
@@ -35,7 +35,7 @@ PRINT 'Rows loaded into LineageObjectExpressionDependency: ' + CAST(@RowCount AS
 Declare @DependencyRowCount int
 
 PRINT '============================================================';
-PRINT 'Step 7: Loading Parsed Dependencies';
+PRINT 'Step 6: Loading Parsed Dependencies';
 PRINT '============================================================';
 EXEC Utility.LoadLineageObjectParsedDependency;
 set @DependencyRowCount = (select count(1) from Utility.LineageObjectParsedDependency)
@@ -44,13 +44,29 @@ PRINT 'Rows loaded into LineageObjectExpressionDependency: ' + CAST(@DependencyR
 declare @UpdatedRowCount int
 declare @RowsRemoved int
 PRINT '============================================================';
-PRINT 'Step 8: Updating Parsed Dependencies';
+PRINT 'Step 7: Updating Parsed Dependencies';
 PRINT '============================================================';
-EXEC Utility.updateLineageObjectParsedDependency_ObjectCleanse;
 
+EXEC Utility.updateLineageObjectParsedDependency_ObjectCleanse;
 set @UpdatedRowCount = (select count(1) from Utility.LineageObjectParsedDependency)
 set @RowsRemoved = (select @DependencyRowCount - @UpdatedRowCount)
 PRINT 'Rows removed from LineageObjectExpressionDependency: ' + CAST(@RowsRemoved AS VARCHAR(20));
+
+
+PRINT '============================================================';
+PRINT 'Step 8: Distinct Direct Dependencies';
+PRINT '============================================================';
+EXEC Utility.loadLineageObjectDirectDependency
+set @RowCount = (select count(1) from Utility.LineageObjectDirectDependency)
+PRINT 'Rows loaded into LineageObjectDirectDependency: ' + CAST(@RowCount AS VARCHAR(20));
+
+
+PRINT '============================================================';
+PRINT 'Step 9: Extended Dependencies';
+PRINT '============================================================';
+EXEC Utility.loadLineageObjectExtendedDependency
+set @RowCount = (select count(1) from Utility.LineageObjectExtendedDependency)
+PRINT 'Rows loaded into LineageObjectExtendedDependency: ' + CAST(@RowCount AS VARCHAR(20));
 
 
 PRINT '============================================================';

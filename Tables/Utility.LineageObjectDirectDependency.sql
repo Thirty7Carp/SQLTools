@@ -13,9 +13,6 @@ CREATE TABLE Utility.LineageObjectDirectDependency (
     TargetSchema NVARCHAR(128) NOT NULL,
     TargetObject NVARCHAR(128) NOT NULL,
     TargetType NVARCHAR(60) NOT NULL,
-    DependencyType NVARCHAR(50) NOT NULL, -- 'Direct', 'Indirect', 'Schema-bound', 'Cross-Server'
-    IsSchemabound BIT DEFAULT 0,
-    Level INT DEFAULT 1, -- Dependency depth level
     CaptureDate DATETIME DEFAULT GETDATE()
 );
 GO

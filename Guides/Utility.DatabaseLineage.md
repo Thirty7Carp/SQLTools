@@ -22,10 +22,8 @@ Things it won't work with:
 - Create Utility.loadLineageObjectExpressionDependency - Stored the output from sys.sql_expression_dependencies that can be used for lineage.
 - Create Utility.LineageObjectParsedDependency - Stored all the identified operations that occur, with a source and target.
 - Create Utility.updateLineageObjectParsedDependency_ObjectCleanse - Remove objects identified that are not DB objects, dedupe results, switch around source and targets for Select and Execute. 
-
-#### WIP
-- Create LineageObjectDirectDependency  - Lists all Source and Target objects.
-- Create LineageObjectExtendedDependency - Stores each object, and lists the upstream and downstream dependencies
+- Create Utility.LineageObjectDirectDependency  - Lists all Source and Target objects.
+- Create Utility.LineageObjectExtendedDependency - Stores each object, and lists the upstream and downstream dependencies
 
 ### Stored Procedures for Generating Objects
 - Create Utility.loadLineageObjectList - Loads LineageObjectList.
@@ -34,16 +32,17 @@ Things it won't work with:
 - Create Utility.updateLineageObjectDefinitions_RemoveStringLiteral - Removes all the string literals from LineageObjectDefinitions. Ensures no values in strings are returned. e.g. if you have a string 'UPDATE THIS TABLE', it would read UPDATE as DML which is unwanted behaviour.
 - Create Utility.updateLineageObjectDefinitions_RemoveWhitespace - Removes carriage returns, tabs, and double spaces in order to make reading the defintion easier.
 - Create Utility.loadLineageObjectExpressionDependency - populates LineageObjectExpressionDependency.
-- Create Utility.loadObjectParsedDependency - populates LineageObjectParsedDependency
-- Create Utility.updateLineageObjectParsedDependency_removeObjectsOutsideObjectList - Updates LineageObjectParsedDependency
- 
-#### WIP
-- Create loadLineageObjectDirectDependency - Loads LineageObjectDirectDependency.
-- Create updateLineageObjectExtendedDependency - Loads LineageObjectExtendedDependency.
+- Create Utility.loadLineageObjectParsedDependency - populates LineageObjectParsedDependency
+- Create Utility.loadLineageObjectParsedDependency_removeObjectsOutsideObjectList - Updates LineageObjectParsedDependency
+- Create Utility.loadLineageObjectDirectDependency - Loads LineageObjectDirectDependency.
+- Create Utility.updateLineageObjectExtendedDependency - Loads LineageObjectExtendedDependency.
+
+Check object exclusions.
+I am here.
+
 
 ### ENTIRELY OPTIONAL - Views
 - Create vwLineageObjectSummary - Summarises the dependencies for each object.
-- Create vwLineageObjectDirectDependency - Lists the direct dependencies.
 - Create vwLineageObjectCircularDependency - Lists the circular dependencies.
 - Create vwLineageObjectOrphaned - Lists objects without any upstream or downstream dependencies.
 

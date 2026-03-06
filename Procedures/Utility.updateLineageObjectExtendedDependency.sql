@@ -1,6 +1,6 @@
 
-CREATE PROCEDURE Utility.updateLineageObjectExtendedDependency
-    @MaxLevels INT = 10  -- Maximum recursion depth
+CREATE PROCEDURE Utility.loadLineageObjectExtendedDependency
+    @MaxLevels INT = 15  -- Maximum recursion depth
 AS
 BEGIN
     SET NOCOUNT ON;
