@@ -1,4 +1,4 @@
-CREATE PROCEDURE [Utility].[loadLineageObjectDefinitions]
+Create PROCEDURE [Utility].[loadLineageObjectDefinitions]
 
 AS
 BEGIN
@@ -35,7 +35,7 @@ BEGIN
         SET @SQL = '
             USE [' + @DatabaseName + '];
 
-            INSERT INTO ' + QUOTENAME(DB_NAME()) + '.Utility.LineageObjectDefinitions
+            INSERT INTO ' + CAST(QUOTENAME(DB_NAME()) AS NVARCHAR(MAX)) + '.Utility.LineageObjectDefinitions
                 (ServerName, DatabaseName, SchemaName, ObjectID, ObjectName, ObjectType, ObjectDefinition)
             SELECT 
                 ''' + @@SERVERNAME + ''',

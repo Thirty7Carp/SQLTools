@@ -1,4 +1,3 @@
-
 CREATE PROCEDURE Utility.loadLineageObjectDirectDependency
 AS
 BEGIN
@@ -22,7 +21,7 @@ BEGIN
             AND HAS_DBACCESS(d.name) = 1
             AND NOT EXISTS (
                 SELECT 1 
-                FROM ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageDatabaseExclusions de
+                FROM ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageDatabaseExclusions de
                 WHERE de.IsActive = 1
                     AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
                     AND d.name LIKE de.DatabaseName
@@ -41,7 +40,7 @@ BEGIN
             -- Build dynamic SQL for dependency extraction
             --------------------------------------------------------------------
             SET @SQL = N'
-            INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageObjectDirectDependency
+            INSERT INTO ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageObjectDirectDependency
                 (SourceServer, SourceDatabase, SourceSchema, SourceObject, SourceType,
                  TargetServer, TargetDatabase, TargetSchema, TargetObject, TargetType,
                  DependencyType, IsSchemabound)
@@ -70,7 +69,7 @@ BEGIN
             WHERE o.is_ms_shipped = 0
                 AND sed.referenced_entity_name IS NOT NULL;
 
-            INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageObjectDirectDependency
+            INSERT INTO ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageObjectDirectDependency
                 (SourceServer, SourceDatabase, SourceSchema, SourceObject, SourceType,
                  TargetServer, TargetDatabase, TargetSchema, TargetObject, TargetType,
                  DependencyType, IsSchemabound)
@@ -189,4 +188,3 @@ BEGIN
   ;
 END
 GO
-

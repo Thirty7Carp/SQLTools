@@ -29,7 +29,7 @@ BEGIN
     BEGIN
         BEGIN TRY
             SET @SQL = N'
-                INSERT INTO ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageObjectExpressionDependency
+                INSERT INTO ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageObjectExpressionDependency
                     (
                     ReferencingObjectID,
                     ReferencingServer,
@@ -73,7 +73,7 @@ BEGIN
                     sed.referencing_minor_id = 0
                     AND NOT EXISTS (
                         SELECT 1
-                        FROM ' + QUOTENAME(@UtilitySchemaDatabase) + '.Utility.LineageDatabaseExclusions de
+                        FROM ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageDatabaseExclusions de
                         WHERE de.IsActive = 1
                             AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
                             AND ISNULL(sed.referenced_database_name, ''' + @DatabaseName + ''') LIKE de.DatabaseName

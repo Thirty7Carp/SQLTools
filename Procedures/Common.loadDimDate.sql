@@ -16,7 +16,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-create PROCEDURE [Common].[loadDimDate]
+CREATE PROCEDURE [Common].[loadDimDate]
     @FiscalYearStartMMDD CHAR(4) = '0701',
     @MinimumDate date = '1800-01-01',
     @MaximumDate DATE = '2099-12-31',
@@ -362,7 +362,7 @@ VALUES
     BEGIN
         SET @HolidaySQL = '
         UPDATE d
-        SET d.' + QUOTENAME(@ColumnName) + ' = CASE WHEN ph.DimDate_SK IS NOT NULL THEN 1 ELSE 0 END
+        SET d.' + CAST(QUOTENAME(@ColumnName) AS NVARCHAR(MAX)) + ' = CASE WHEN ph.DimDate_SK IS NOT NULL THEN 1 ELSE 0 END
         FROM Common.DimDate d
         LEFT JOIN Common.PublicHoliday ph 
             ON ph.DimDate_SK = d.DimDate_SK 
@@ -396,7 +396,7 @@ SET RelativeBusinessDays_' + COLUMN_NAME + ' =
                  FROM Common.DimDate h
                  WHERE h.[Date] > d.[Date]
                    AND h.[Date] < @TodayDate
-                   AND h.' + QUOTENAME(COLUMN_NAME) + ' = 1
+                   AND h.' + CAST(QUOTENAME(COLUMN_NAME) AS NVARCHAR(MAX)) + ' = 1
                    AND h.IsWeekend = 0)
             ) * -1
         WHEN d.[Date] > @TodayDate THEN
@@ -411,7 +411,7 @@ SET RelativeBusinessDays_' + COLUMN_NAME + ' =
                  FROM Common.DimDate h
                  WHERE h.[Date] > @TodayDate
                    AND h.[Date] <= d.[Date]
-                   AND h.' + QUOTENAME(COLUMN_NAME) + ' = 1
+                   AND h.' + CAST(QUOTENAME(COLUMN_NAME) AS NVARCHAR(MAX)) + ' = 1
                    AND h.IsWeekend = 0)
             )
         ELSE 0
@@ -437,4 +437,3 @@ EXEC sp_executesql @HolidayRelativeBusinessDaysSQL, N'@TodayDate DATE', @TodayDa
 
 END
 GO
-
