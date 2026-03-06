@@ -1,6 +1,6 @@
-Create PROCEDURE Utility.reportObjectDataProfile
+Create PROCEDURE Common.reportObjectDataProfile
     @ObjectName NVARCHAR(300)   
--- EXEC Utility.reportObjectDataProfile 'database.schema.objectname'
+-- EXEC Common.outputObjectDataProfile 'database.schema.objectname'
 AS
 BEGIN
     SET NOCOUNT ON;
