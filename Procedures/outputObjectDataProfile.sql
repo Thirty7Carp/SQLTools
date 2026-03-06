@@ -1,6 +1,6 @@
-Create PROCEDURE Common.reportObjectDataProfile
+CREATE PROCEDURE Utility.outputObjectDataProfile
     @ObjectName NVARCHAR(300)   
--- EXEC Common.outputObjectDataProfile 'database.schema.objectname'
+-- EXEC Utility.outputObjectDataProfile 'Yourdatabase.Yourschema.Yourobjectname'
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -267,10 +267,33 @@ END;
 CLOSE col_cursor2;
 DEALLOCATE col_cursor2;
 
-
-        SELECT
-        *
-    FROM #ColumnProfile;
+SELECT
+    ColumnNumber,
+    DatabaseName,
+    SchemaName,
+    TableName,
+    ColumnName,
+    Type,
+    Length,
+    Precision,
+    Scale,
+    TotalRows,
+    MinValue,
+    MaxValue,
+    MinimumLength,
+    AverageLength,
+    MaxLength,
+    MaxLengthReached,
+    MostCommonValue,
+    MostCommonValueAppears,
+    MostCommonValuePercentage,
+    DistinctValues,
+    UniqueValues,
+    UniquenessPercentage,
+    NullValues,
+    NullPercentage
+FROM 
+    #ColumnProfile;
 
 END;
 GO
