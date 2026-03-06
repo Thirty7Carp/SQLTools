@@ -1,5 +1,6 @@
-create PROCEDURE dbo.reportObjectDataProfile
-    @ObjectName NVARCHAR(300)   -- e.g. 'AdventureWorks2017.Person.Person'
+Create PROCEDURE Utility.reportObjectDataProfile
+    @ObjectName NVARCHAR(300)   
+-- EXEC Utility.reportObjectDataProfile 'database.schema.objectname'
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -19,7 +20,7 @@ BEGIN
         ColumnScale INT
     );
 
-    -- Metadata query with corrected type and length logic
+    -- Metadata query
     DECLARE @metadatasql NVARCHAR(MAX) = 
     'SELECT 
         ColumnNumber    = c.column_id,
@@ -32,7 +33,7 @@ BEGIN
                               ELSE NULL
                           END,
         ColumnScale     = c.scale
-    FROM ' + QUOTENAME(@DatabaseName) + '.sys.columns c
+    FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.sys.columns c
     WHERE c.object_id = OBJECT_ID(''' + @DatabaseName + '.' + @SchemaName + '.' + @TableName + ''')
       AND TYPE_NAME(c.system_type_id) NOT IN (''xml'',''varbinary'',''image'',''geography'',''hierarchyid'');';
 
@@ -52,6 +53,10 @@ BEGIN
         TotalRows INT,
         MinValue NVARCHAR(MAX),
         MaxValue NVARCHAR(MAX),
+        MinimumLength INT,
+        AverageLength DECIMAL(10,2),
+        MaxLength INT,
+        MaxLengthReached BIT,
         MostCommonValue NVARCHAR(MAX),
         MostCommonValueAppears INT,
         MostCommonValuePercentage FLOAT,
@@ -90,83 +95,87 @@ BEGIN
             TotalRows         = COUNT(*),
             MinValue          = NULL,
             MaxValue          = NULL,
+            MinimumLength     = NULL,
+            AverageLength     = NULL,
+            MaxLength         = NULL,
+            MaxLengthReached  = NULL,
             MostCommonValue   = (
                 SELECT 
                     CASE 
                         WHEN COUNT(*) >= 10 
-                            THEN ''Limit (10) Reached: '' + STRING_AGG(ISNULL(CONVERT(NVARCHAR(MAX), tied.' + QUOTENAME(@ColName) + '), ''<NULL>''), '', '')
-                        ELSE STRING_AGG(ISNULL(CONVERT(NVARCHAR(MAX), tied.' + QUOTENAME(@ColName) + '), ''<NULL>''), '', '')
+                            THEN ''Limit (10) Reached: '' + STRING_AGG(ISNULL(CONVERT(NVARCHAR(MAX), tied.' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '), ''<NULL>''), '', '')
+                        ELSE STRING_AGG(ISNULL(CONVERT(NVARCHAR(MAX), tied.' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '), ''<NULL>''), '', '')
                     END
                 FROM (
-                    SELECT TOP (10) ' + QUOTENAME(@ColName) + '
+                    SELECT TOP (10) ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
                     FROM (
-                        SELECT ' + QUOTENAME(@ColName) + ', COUNT(*) AS cnt
-                        FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '
-                        GROUP BY ' + QUOTENAME(@ColName) + '
+                        SELECT ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + ', COUNT(*) AS cnt
+                        FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                        GROUP BY ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
                     ) AS counts
                     WHERE cnt = (
                         SELECT MAX(cnt)
                         FROM (
                             SELECT COUNT(*) AS cnt
-                            FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '
-                            GROUP BY ' + QUOTENAME(@ColName) + '
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                            GROUP BY ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
                         ) AS maxcounts
                     )
-                    ORDER BY ' + QUOTENAME(@ColName) + '
+                    ORDER BY ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
                 ) AS tied
             ),
             MostCommonValueAppears = (
                 SELECT TOP 1 cnt
                 FROM (
                     SELECT COUNT(*) AS cnt
-                    FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '
-                    GROUP BY ' + QUOTENAME(@ColName) + '
+                    FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                    GROUP BY ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
                 ) AS counts
                 ORDER BY cnt DESC
             ),
             MostCommonValuePercentage = (
                 SELECT MAX(cnt) * 100.0 / NULLIF((SELECT COUNT(*) 
-                                                  FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '),0)
+                                                  FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),0)
                 FROM (
                     SELECT COUNT(*) AS cnt
-                    FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '
-                    GROUP BY ' + QUOTENAME(@ColName) + '
+                    FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                    GROUP BY ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
                 ) AS counts
             ),
-            DistinctValues    = COUNT(DISTINCT ' + QUOTENAME(@ColName) + '),
+            DistinctValues    = COUNT(DISTINCT ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '),
             UniqueValues      = (
                 SELECT COUNT(*) 
                 FROM (
-                    SELECT ' + QUOTENAME(@ColName) + '
-                    FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '
-                    GROUP BY ' + QUOTENAME(@ColName) + '
+                    SELECT ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
+                    FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                    GROUP BY ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
                     HAVING COUNT(*) = 1
                 ) AS uniques
             ),
             UniquenessPercentage = (
                 SELECT COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) 
-                                                  FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '),0)
+                                                  FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),0)
                 FROM (
-                    SELECT ' + QUOTENAME(@ColName) + '
-                    FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '
-                    GROUP BY ' + QUOTENAME(@ColName) + '
+                    SELECT ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
+                    FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                    GROUP BY ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + '
                     HAVING COUNT(*) = 1
                 ) AS uniques
             ),
             NullValues        = (
                 SELECT COUNT(*) 
-                FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '
-                WHERE ' + QUOTENAME(@ColName) + ' IS NULL
+                FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                WHERE ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + ' IS NULL
             ),
             NullPercentage    = (
                 SELECT COUNT(*) * 100.0 / NULLIF(
                     (SELECT COUNT(*) 
-                     FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '), 0
+                     FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '), 0
                 )
-                FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '
-                WHERE ' + QUOTENAME(@ColName) + ' IS NULL
+                FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                WHERE ' + CAST(QUOTENAME(@ColName) AS NVARCHAR(MAX)) + ' IS NULL
             )
-        FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + ';';
+        FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + ';';
 
         EXEC (@SQL);
 
@@ -176,51 +185,72 @@ BEGIN
     CLOSE col_cursor;
     DEALLOCATE col_cursor;
     
-    DECLARE @ColNumber2 INT, @ColName2 SYSNAME, @ColType2 SYSNAME;
+    DECLARE @ColNumber2 INT, @ColName2 SYSNAME, @ColType2 SYSNAME, @ColLength2 INT;
 DECLARE @SQL2 NVARCHAR(MAX);
 
 DECLARE col_cursor2 CURSOR FOR
-SELECT ColumnNumber, ColumnName, ColumnType
+SELECT ColumnNumber, ColumnName, ColumnType, ColumnLength
 FROM @Columns;
 
 OPEN col_cursor2;
-FETCH NEXT FROM col_cursor2 INTO @ColNumber2, @ColName2, @ColType2;
+FETCH NEXT FROM col_cursor2 INTO @ColNumber2, @ColName2, @ColType2, @ColLength2;
 
 WHILE @@FETCH_STATUS = 0
 BEGIN
     IF @ColType2 IN (
         'int','bigint','smallint','tinyint',
         'decimal','numeric','float','real',
-        'money','smallmoney',
+        'money','smallmoney'
+    )
+    BEGIN
+        SET @SQL2 = '
+            UPDATE #ColumnProfile
+            SET MinValue = (SELECT CONVERT(NVARCHAR(MAX), MIN(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + ')) 
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),
+                MaxValue = (SELECT CONVERT(NVARCHAR(MAX), MAX(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + ')) 
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + ')
+            WHERE ColumnNumber = ' + CAST(@ColNumber2 AS NVARCHAR(10)) + ';';
+    END
+    ELSE IF @ColType2 IN (
         'date','datetime','datetime2','smalldatetime','time','datetimeoffset'
     )
     BEGIN
         SET @SQL2 = '
             UPDATE #ColumnProfile
-            SET MinValue = (SELECT CONVERT(NVARCHAR(MAX), MIN(' + QUOTENAME(@ColName2) + ')) 
-                            FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '),
-                MaxValue = (SELECT CONVERT(NVARCHAR(MAX), MAX(' + QUOTENAME(@ColName2) + ')) 
-                            FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + ')
+            SET MinValue = (SELECT CONVERT(NVARCHAR(MAX), MIN(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + '), 120) 
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),
+                MaxValue = (SELECT CONVERT(NVARCHAR(MAX), MAX(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + '), 120) 
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + ')
             WHERE ColumnNumber = ' + CAST(@ColNumber2 AS NVARCHAR(10)) + ';';
     END
     ELSE IF @ColType2 = 'bit'
     BEGIN
         SET @SQL2 = '
             UPDATE #ColumnProfile
-            SET MinValue = (SELECT CONVERT(NVARCHAR(MAX), MIN(CAST(' + QUOTENAME(@ColName2) + ' AS INT))) 
-                            FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '),
-                MaxValue = (SELECT CONVERT(NVARCHAR(MAX), MAX(CAST(' + QUOTENAME(@ColName2) + ' AS INT))) 
-                            FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + ')
+            SET MinValue = (SELECT CONVERT(NVARCHAR(MAX), MIN(CAST(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + ' AS INT))) 
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),
+                MaxValue = (SELECT CONVERT(NVARCHAR(MAX), MAX(CAST(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + ' AS INT))) 
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + ')
             WHERE ColumnNumber = ' + CAST(@ColNumber2 AS NVARCHAR(10)) + ';';
     END
     ELSE IF @ColType2 IN ('char','nchar','varchar','nvarchar','text','ntext')
     BEGIN
         SET @SQL2 = '
             UPDATE #ColumnProfile
-            SET MinValue = (SELECT CONVERT(NVARCHAR(MAX), MIN(' + QUOTENAME(@ColName2) + ')) 
-                            FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + '),
-                MaxValue = (SELECT CONVERT(NVARCHAR(MAX), MAX(' + QUOTENAME(@ColName2) + ')) 
-                            FROM ' + QUOTENAME(@DatabaseName) + '.' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + ')
+            SET MinValue = (SELECT CONVERT(NVARCHAR(MAX), MIN(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + ')) 
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),
+                MaxValue = (SELECT CONVERT(NVARCHAR(MAX), MAX(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + ')) 
+                            FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),
+                MinimumLength = (SELECT MIN(LEN(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + '))
+                                 FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),
+                AverageLength = (SELECT CAST(AVG(CAST(LEN(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + ') AS DECIMAL(10,2))) AS DECIMAL(10,2))
+                                 FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),
+                MaxLength     = (SELECT MAX(LEN(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + '))
+                                 FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '),
+                MaxLengthReached = (
+                    SELECT CASE WHEN MAX(LEN(' + CAST(QUOTENAME(@ColName2) AS NVARCHAR(MAX)) + ')) >= ' + COALESCE(CAST(@ColLength2 AS NVARCHAR(10)), 'NULL') + ' THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END
+                    FROM ' + CAST(QUOTENAME(@DatabaseName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@SchemaName) AS NVARCHAR(MAX)) + '.' + CAST(QUOTENAME(@TableName) AS NVARCHAR(MAX)) + '
+                )
             WHERE ColumnNumber = ' + CAST(@ColNumber2 AS NVARCHAR(10)) + ';';
     END
     ELSE
@@ -231,7 +261,7 @@ BEGIN
     IF @SQL2 IS NOT NULL
         EXEC (@SQL2);
 
-    FETCH NEXT FROM col_cursor2 INTO @ColNumber2, @ColName2, @ColType2;
+    FETCH NEXT FROM col_cursor2 INTO @ColNumber2, @ColName2, @ColType2, @ColLength2;
 END;
 
 CLOSE col_cursor2;
