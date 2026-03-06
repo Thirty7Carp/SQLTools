@@ -21,6 +21,9 @@ BEGIN
         -- Add space before semicolons
         SET @sql = REPLACE(@sql, ';', ' ;');
 
+        -- Add space before bracket
+        SET @sql = REPLACE(@sql, ')', ' )');
+
         -- Add space before commas
         SET @sql = REPLACE(@sql, ',', ' ,');
 

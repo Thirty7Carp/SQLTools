@@ -32,12 +32,26 @@ EXEC Utility.LoadLineageObjectExpressionDependency;
 SELECT @RowCount = COUNT(*) FROM Utility.LineageObjectExpressionDependency;
 PRINT 'Rows loaded into LineageObjectExpressionDependency: ' + CAST(@RowCount AS VARCHAR(20));
 
+Declare @DependencyRowCount int
+
 PRINT '============================================================';
 PRINT 'Step 7: Loading Parsed Dependencies';
 PRINT '============================================================';
 EXEC Utility.LoadLineageObjectParsedDependency;
-SELECT @RowCount = COUNT(*) FROM Utility.LineageObjectParsedDependency;
-PRINT 'Rows loaded into LineageObjectParsedDependency: ' + CAST(@RowCount AS VARCHAR(20));
+set @DependencyRowCount = (select count(1) from Utility.LineageObjectParsedDependency)
+PRINT 'Rows loaded into LineageObjectExpressionDependency: ' + CAST(@DependencyRowCount AS VARCHAR(20));
+
+declare @UpdatedRowCount int
+declare @RowsRemoved int
+PRINT '============================================================';
+PRINT 'Step 8: Updating Parsed Dependencies';
+PRINT '============================================================';
+EXEC Utility.updateLineageObjectParsedDependency_ObjectCleanse;
+
+set @UpdatedRowCount = (select count(1) from Utility.LineageObjectParsedDependency)
+set @RowsRemoved = (select @DependencyRowCount - @UpdatedRowCount)
+PRINT 'Rows removed from LineageObjectExpressionDependency: ' + CAST(@RowsRemoved AS VARCHAR(20));
+
 
 PRINT '============================================================';
 PRINT 'Pipeline Complete';
