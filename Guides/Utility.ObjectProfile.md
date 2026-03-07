@@ -2,7 +2,7 @@
 
 _Find out stuff about tables on your DB_
 
-Stored procedure dbo.reportObjectDataProfile provides a summary of each column in a table.
+Stored procedure Utility.outputObjectDataProfile provides a summary of each column in a table.
 
 the larger your object is, the longer it will take so be careful.  
 

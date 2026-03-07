@@ -1,4 +1,4 @@
-﻿Create PROCEDURE Common.outputLongPrint
+﻿Create PROCEDURE Utility.outputLongPrint
     @sql VARCHAR(MAX)
 AS
 BEGIN

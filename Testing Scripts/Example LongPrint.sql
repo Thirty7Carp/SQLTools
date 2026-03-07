@@ -5,7 +5,6 @@ SET @sql =
    
    --[YOUR QUERY THAT RETURNS ONE ROW HERE]
 
-
     )
 
-EXEC common.outputLongPrint @sql = @sql
+EXEC Utility.outputLongPrint @sql = @sql

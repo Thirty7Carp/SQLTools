@@ -17,7 +17,7 @@ Things it won't work with:
 - Create Utility.LineageObjectList - Stores a list of all objects.
 - Create Utility.LineageObjectExclusions - A place to record tables you want ignored from dependency mapping. e.g. Log Tables
 - Create Utility.LineageDatabaseExclusions  - A place to list objects you want exclued from lineage tracking.
-- #ACTION REQUIRED# Create Utility.DynamicMerge - #If# you have a dynamic Source -> Process -> Target updating/merging, you need to enter those values into this table.
+- #POSSIBLE ACTION REQUIRED# Create Utility.DynamicMerge - #If# you have a dynamic Source -> Process -> Target updating/merging, you need to enter those values into this table.
 - Create Utility.LineageObjectDefinitions - lists all the object definitions. Useful for obtaining DDL values.
 - Create Utility.loadLineageObjectExpressionDependency - Stored the output from sys.sql_expression_dependencies that can be used for lineage.
 - Create Utility.LineageObjectParsedDependency - Stored all the identified operations that occur, with a source and target.
@@ -34,12 +34,9 @@ Things it won't work with:
 - Create Utility.updateLineageObjectDefinitions_RemoveWhitespace - Removes carriage returns, tabs, and double spaces in order to make reading the defintion easier.
 - Create Utility.loadLineageObjectExpressionDependency - populates LineageObjectExpressionDependency.
 - Create Utility.loadLineageObjectParsedDependency - populates LineageObjectParsedDependency
-- Create Utility.loadLineageObjectParsedDependency_removeObjectsOutsideObjectList - Updates LineageObjectParsedDependency
+- Create Utility.updateLineageObjectParsedDependency_ObjectCleanse - Updates LineageObjectParsedDependency
 - Create Utility.loadLineageObjectDirectDependency - Loads LineageObjectDirectDependency.
 - Create Utility.updateLineageObjectExtendedDependency - Loads LineageObjectExtendedDependency.
-
-Check object exclusions.
-I am here.
 
 
 ### ENTIRELY OPTIONAL - Views
