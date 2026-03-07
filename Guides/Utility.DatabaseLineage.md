@@ -24,6 +24,7 @@ Things it won't work with:
 - Create Utility.updateLineageObjectParsedDependency_ObjectCleanse - Remove objects identified that are not DB objects, dedupe results, switch around source and targets for Select and Execute. 
 - Create Utility.LineageObjectDirectDependency  - Lists all Source and Target objects.
 - Create Utility.LineageObjectExtendedDependency - Stores each object, and lists the upstream and downstream dependencies
+- Create Utility.LineageObjectExtendedDependencyLimit - Stores a list of objects where the downstread dependency reaches your desired limit.
 
 ### Stored Procedures for Generating Objects
 - Create Utility.loadLineageObjectList - Loads LineageObjectList.

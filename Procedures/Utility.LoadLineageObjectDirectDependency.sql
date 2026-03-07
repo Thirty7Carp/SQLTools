@@ -30,23 +30,26 @@ BEGIN
         ON  tgt.ServerName   = lpd.TargetServer
         AND tgt.DatabaseName = lpd.TargetDatabase
         AND tgt.SchemaName   = lpd.TargetSchema
-        AND tgt.ObjectName   = lpd.TargetObject
-
-    UNION ALL
-
-    select
-            SourceServer  = SourceServerName
-            , SourceDatabase = SourceDatabaseName
-            , SourceSchema = SourceSchemaName
-            , SourceObject = SourceObjectName
-            , SourceType = SourceObjectType
-            , TargetServer = TargetServerName
-            , TatargetDatabase = ProcessDatabaseName
-            , TargetSchema = ProcessSchemaName
-            , TargetObject = ProcessObjectName
-            , TargetType = ProcessObjectType
-        from
-	        SQLTools.Utility.DynamicMerge
+        AND tgt.ObjectName   = lpd.TargetObject;
+        
+    IF OBJECT_ID('Utility.DynamicMerge', 'U') IS NOT NULL
+    BEGIN
+        INSERT INTO Utility.LineageObjectDirectDependency
+            (SourceServer, SourceDatabase, SourceSchema, SourceObject, SourceType,
+             TargetServer, TargetDatabase, TargetSchema, TargetObject, TargetType)
+        SELECT DISTINCT
+            SourceServerName,
+            SourceDatabaseName,
+            SourceSchemaName,
+            SourceObjectName,
+            SourceObjectType,
+            TargetServerName,
+            ProcessDatabaseName,
+            ProcessSchemaName,
+            ProcessObjectName,
+            ProcessObjectType
+        FROM Utility.DynamicMerge;
+    END
 
 END
 GO

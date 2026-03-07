@@ -1,11 +1,11 @@
-
 CREATE PROCEDURE Utility.loadLineageObjectExtendedDependency
-    @MaxLevels INT = 15  -- Maximum recursion depth
+    @MaxLevels INT = 20  -- Maximum recursion depth
 AS
 BEGIN
     SET NOCOUNT ON;
     
     TRUNCATE TABLE Utility.LineageObjectExtendedDependency;
+    TRUNCATE TABLE Utility.LineageObjectExtendedDependencyLimit;
     
     -- Build downstream lineage (what depends on what)
     ;WITH RecursiveDependencies AS (
@@ -80,6 +80,15 @@ BEGIN
         LineagePath, LineageLevel, 'Downstream'
     FROM RecursiveDependencies
     OPTION (MAXRECURSION 0);
+
+    -- Record downstream objects that hit the max level limit
+    INSERT INTO Utility.LineageObjectExtendedDependencyLimit
+        (RootServer, RootDatabase, RootSchema, RootObject, LineageDirection, MaxLevel)
+    SELECT DISTINCT
+        RootServer, RootDatabase, RootSchema, RootObject, 'Downstream', @MaxLevels
+    FROM Utility.LineageObjectExtendedDependency
+    WHERE LineageLevel = @MaxLevels
+        AND LineageDirection = 'Downstream';
     
     -- Build upstream lineage (what an object depends on)
     ;WITH RecursiveUpstream AS (
@@ -153,6 +162,15 @@ BEGIN
         LineagePath, LineageLevel, 'Upstream'
     FROM RecursiveUpstream
     OPTION (MAXRECURSION 0);
+
+    -- Record upstream objects that hit the max level limit
+    INSERT INTO Utility.LineageObjectExtendedDependencyLimit
+        (RootServer, RootDatabase, RootSchema, RootObject, LineageDirection, MaxLevel)
+    SELECT DISTINCT
+        RootServer, RootDatabase, RootSchema, RootObject, 'Upstream', @MaxLevels
+    FROM Utility.LineageObjectExtendedDependency
+    WHERE LineageLevel = @MaxLevels
+        AND LineageDirection = 'Upstream';
     
     SELECT COUNT(*) AS TotalLineagePathsCaptured FROM Utility.LineageObjectExtendedDependency;
 END
