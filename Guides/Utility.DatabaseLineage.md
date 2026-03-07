@@ -30,9 +30,8 @@ Things it won't work with:
 - Create Utility.loadLineageObjectList - Loads LineageObjectList.
 - Create Utility.loadLineageObjectDefinitions - Loads LineageObjectDefinitions
 - Create Utility.updateLineageObjectDefinitions_RemoveComments - Removes all the commented codes from LineageObjectDefintions. Ensures no commented out values are returned.
-- Create Utility.updateLineageObjectDefinitions_RemoveStringLiteral - Removes all the string literals from LineageObjectDefinitions. Ensures no values in strings are returned. e.g. if you have a string 'UPDATE THIS TABLE', it would read UPDATE as DML which is unwanted behaviour.
 - Create Utility.updateLineageObjectDefinitions_RemoveWhitespace - Removes carriage returns, tabs, and double spaces in order to make reading the defintion easier.
-- Create Utility.loadLineageObjectExpressionDependency - populates LineageObjectExpressionDependency.
+- Create Utility.loadLineageObjec]tExpressionDependency - populates LineageObjectExpressionDependency.
 - Create Utility.loadLineageObjectParsedDependency - populates LineageObjectParsedDependency
 - Create Utility.updateLineageObjectParsedDependency_ObjectCleanse - Updates LineageObjectParsedDependency
 - Create Utility.loadLineageObjectDirectDependency - Loads LineageObjectDirectDependency.

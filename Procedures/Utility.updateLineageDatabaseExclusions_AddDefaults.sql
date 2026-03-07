@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.updateLineageDatabaseExclusionsAddDefaults
+CREATE PROCEDURE Utility.updateLineageDatabaseExclusions_AddDefaults
 AS
 BEGIN
     SET NOCOUNT ON;
