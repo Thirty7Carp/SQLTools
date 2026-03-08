@@ -19,7 +19,7 @@ Contains
 
 Guide
   
- - Load your public holidays into  common.PublicHoliday. An example load file is provided (Testing Scripts\WA Public Holidays Insert Script.sql)
+ - Load your public holidays into  common.DT_PublicHoliday. An example load file is provided (Testing Scripts\WA Public Holidays Insert Script.sql)
      - DimDate_SK = the date in YYYYMMDD
      - PublicHolidayType = The Group it falls into, I have used AustraliaWA as a demo.
      - PublicHolidayName = The name of the public holiday.
@@ -31,7 +31,7 @@ Guide
 
   - Run the Create table script Tables\DimDate for the first time.
   
-  - Execute common.loadDimDate after updating these variables in the script:
+  - Execute common.DT_loadDimDate after updating these variables in the script:
     - @FiscalYearStartMMDD = The Month and Day your financial year starts.
     - @MinimumDate = The minimum date in your dimdate. 19000101 may suffice, but 18000101 is the default.
     - @MaximumDate = The Maximum date in your dimdate. 20991231 is the default.
