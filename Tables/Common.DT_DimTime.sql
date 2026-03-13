@@ -1,4 +1,4 @@
-CREATE TABLE Common.DimTime
+CREATE TABLE Common.DT_DimTime
 (
     DimTime_SK              BIGINT       NOT NULL PRIMARY KEY, -- Surrogate Key
     Time                    TIME(0)      NOT NULL,             -- Full time value (HH:MM:SS)

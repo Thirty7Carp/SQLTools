@@ -16,7 +16,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [Common].[loadDimDate]
+CREATE PROCEDURE [Common].[DT_loadDimDate]
     @FiscalYearStartMMDD CHAR(4) = '0701',
     @MinimumDate date = '1800-01-01',
     @MaximumDate DATE = '2099-12-31',
@@ -39,10 +39,10 @@ BEGIN
         ) + @FiscalYearStartMMDD 
     AS DATE);
 
-    TRUNCATE TABLE Common.DimDate;
+    TRUNCATE TABLE Common.DT_DimDate;
 
 
-    INSERT INTO Common.DimDate (
+    INSERT INTO Common.DT_DimDate (
     DimDate_SK,
     Date,
     CalendarYear,
@@ -187,7 +187,7 @@ VALUES
         FROM DateSequence
         WHERE TheDate <= @MaximumDate
     )
-    INSERT INTO Common.DimDate (
+    INSERT INTO Common.DT_DimDate (
         DimDate_SK, Date,
 
         -- Calendar fields
@@ -350,7 +350,7 @@ VALUES
     FROM 
         INFORMATION_SCHEMA.COLUMNS c
     WHERE 
-        c.TABLE_NAME = 'DimDate'
+        c.TABLE_NAME = 'DT_DimDate'
         AND c.TABLE_SCHEMA = 'Common'
         AND c.COLUMN_NAME LIKE 'Holiday%'
 
@@ -363,8 +363,8 @@ VALUES
         SET @HolidaySQL = '
         UPDATE d
         SET d.' + CAST(QUOTENAME(@ColumnName) AS NVARCHAR(MAX)) + ' = CASE WHEN ph.DimDate_SK IS NOT NULL THEN 1 ELSE 0 END
-        FROM Common.DimDate d
-        LEFT JOIN Common.PublicHoliday ph 
+        FROM Common.DT_DimDate d
+        LEFT JOIN Common.DT_PublicHoliday ph 
             ON ph.DimDate_SK = d.DimDate_SK 
             AND ph.PublicHolidayType = ''' + @HolidayType + ''';';
     
@@ -387,13 +387,13 @@ SET RelativeBusinessDays_' + COLUMN_NAME + ' =
         WHEN d.[Date] < @TodayDate THEN
             (
                 (SELECT COUNT(*)
-                 FROM Common.DimDate wd
+                 FROM Common.DT_DimDate wd
                  WHERE wd.[Date] > d.[Date]
                    AND wd.[Date] < @TodayDate
                    AND wd.IsWeekend = 0)
               -
                 (SELECT COUNT(*)
-                 FROM Common.DimDate h
+                 FROM Common.DT_DimDate h
                  WHERE h.[Date] > d.[Date]
                    AND h.[Date] < @TodayDate
                    AND h.' + CAST(QUOTENAME(COLUMN_NAME) AS NVARCHAR(MAX)) + ' = 1
@@ -402,13 +402,13 @@ SET RelativeBusinessDays_' + COLUMN_NAME + ' =
         WHEN d.[Date] > @TodayDate THEN
             (
                 (SELECT COUNT(*)
-                 FROM Common.DimDate wd
+                 FROM Common.DT_DimDate wd
                  WHERE wd.[Date] > @TodayDate
                    AND wd.[Date] <= d.[Date]
                    AND wd.IsWeekend = 0)
               -
                 (SELECT COUNT(*)
-                 FROM Common.DimDate h
+                 FROM Common.DT_DimDate h
                  WHERE h.[Date] > @TodayDate
                    AND h.[Date] <= d.[Date]
                    AND h.' + CAST(QUOTENAME(COLUMN_NAME) AS NVARCHAR(MAX)) + ' = 1
@@ -416,15 +416,15 @@ SET RelativeBusinessDays_' + COLUMN_NAME + ' =
             )
         ELSE 0
     END
-FROM Common.DimDate d;
+FROM Common.DT_DimDate d;
 '
 FROM INFORMATION_SCHEMA.COLUMNS c
-WHERE c.TABLE_NAME = 'DimDate'
+WHERE c.TABLE_NAME = 'DT_DimDate'
   AND c.COLUMN_NAME LIKE 'Holiday_%'
   AND EXISTS (
       SELECT 1
       FROM INFORMATION_SCHEMA.COLUMNS r
-      WHERE r.TABLE_NAME = 'DimDate'
+      WHERE r.TABLE_NAME = 'DT_DimDate'
         AND r.COLUMN_NAME = 'RelativeBusinessDays_' + c.COLUMN_NAME
   );
 

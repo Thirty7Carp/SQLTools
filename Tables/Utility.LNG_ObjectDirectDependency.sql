@@ -1,7 +1,7 @@
-drop table if exists Utility.LineageObjectDirectDependency
+drop table if exists Utility.LNG_ObjectDirectDependency
 
 -- Store direct dependencies between objects
-CREATE TABLE Utility.LineageObjectDirectDependency (
+CREATE TABLE Utility.LNG_ObjectDirectDependency (
     DependencyID BIGINT IDENTITY(1,1) PRIMARY KEY,
     SourceServer NVARCHAR(128) NOT NULL DEFAULT @@SERVERNAME,
     SourceDatabase NVARCHAR(128) NOT NULL,
@@ -18,5 +18,5 @@ CREATE TABLE Utility.LineageObjectDirectDependency (
 GO
 
 
-CREATE INDEX IX_ObjectDependencies_Source ON Utility.LineageObjectDirectDependency(SourceServer, SourceDatabase, SourceSchema, SourceObject);
-CREATE INDEX IX_ObjectDependencies_Target ON Utility.LineageObjectDirectDependency(TargetServer, TargetDatabase, TargetSchema, TargetObject);
+CREATE INDEX IX_LNG_ObjectDependencies_Source ON Utility.LNG_ObjectDirectDependency(SourceServer, SourceDatabase, SourceSchema, SourceObject);
+CREATE INDEX IX_LNG_ObjectDependencies_Target ON Utility.LNG_ObjectDirectDependency(TargetServer, TargetDatabase, TargetSchema, TargetObject);

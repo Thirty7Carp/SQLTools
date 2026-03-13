@@ -1,5 +1,5 @@
 
-create TABLE [Utility].[LineageObjectDefinitions](
+create TABLE [Utility].[LNG_ObjectDefinitions](
 	[ObjectID] [int] NULL,
 	[ServerName] varchar(255) NULL,
 	[DatabaseName] [nvarchar](128) NULL,

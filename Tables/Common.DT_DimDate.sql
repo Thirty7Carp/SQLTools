@@ -1,8 +1,10 @@
 DECLARE @sql NVARCHAR(MAX);
 
+drop table if exists Common.DT_DimDate
+
 -- Base create table script
 SET @sql = '
-CREATE TABLE Common.DimDate (
+CREATE TABLE Common.DT_DimDate (
     DimDate_SK INT NOT NULL,
     Date DATE NULL,
     CalendarYear INT NULL,
@@ -54,12 +56,12 @@ WITH HolidayFlags AS (
         HasBusinessDays = CASE 
                              WHEN EXISTS (
                                  SELECT 1 
-                                 FROM Common.PublicHoliday ph2
+                                 FROM Common.DT_PublicHoliday ph2
                                  WHERE ph2.PublicHolidayType = ph.PublicHolidayType
                                    AND ph2.CountBusinessDays = 1
                              ) THEN 1 ELSE 0 
                           END
-    FROM Common.PublicHoliday ph
+    FROM Common.DT_PublicHoliday ph
     GROUP BY ph.PublicHolidayType
 )
 SELECT @sql = @sql + '
@@ -83,9 +85,9 @@ SET @sql = LEFT(@sql, LEN(@sql)-1) + '
  EXEC sp_executesql @sql;
 
  -- Index on IsWeekend for faster filtering of weekdays vs weekends
-CREATE NONCLUSTERED INDEX IX_DimDate_IsWeekend
-ON Common.DimDate (IsWeekend);
+CREATE NONCLUSTERED INDEX IX_DT_DimDate_IsWeekend
+ON Common.DT_DimDate (IsWeekend);
 
 -- Index on Date for faster lookups and range queries
-CREATE NONCLUSTERED INDEX IX_DimDate_Date
-ON Common.DimDate ([Date]);
+CREATE NONCLUSTERED INDEX IX_DT_DimDate_Date
+ON Common.DT_DimDate ([Date]);

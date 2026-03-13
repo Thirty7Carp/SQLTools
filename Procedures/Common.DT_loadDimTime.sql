@@ -70,5 +70,5 @@ BEGIN
         SET @Counter = @Counter + 1;
     END;
 
-    Print 'Loaded DimTime'
+    Print 'Loaded DT_DimTime'
 END;

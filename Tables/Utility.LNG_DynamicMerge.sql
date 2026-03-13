@@ -1,6 +1,6 @@
-drop table if exists Utility.DynamicMerge
+drop table if exists Utility.LNG_DynamicMerge
 
-Create table Utility.DynamicMerge
+Create table Utility.LNG_DynamicMerge
 (
   SourceServerName        varchar(255)
 , SourceDatabaseName      varchar(255)

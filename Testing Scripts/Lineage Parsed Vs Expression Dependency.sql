@@ -14,25 +14,25 @@ SELECT DISTINCT
     CASE WHEN od.ObjectID IS NOT NULL THEN 1 ELSE 0 END AS IsInObjectDefinitions,
     od.ObjectDefinition
 FROM
-    Utility.LineageObjectParsedDependency p
-    INNER JOIN Utility.LineageObjectList tol
+    Utility.LNG_ObjectParsedDependency p
+    INNER JOIN Utility.LNG_ObjectList tol
         ON tol.ServerName = p.TargetServer
         AND tol.DatabaseName = p.TargetDatabase
         AND tol.SchemaName = p.TargetSchema
         AND tol.ObjectName = p.TargetObject
-    LEFT JOIN Utility.LineageObjectList sol
+    LEFT JOIN Utility.LNG_ObjectList sol
         ON sol.ServerName = p.SourceServer
         AND sol.DatabaseName = p.SourceDatabase
         AND sol.SchemaName = p.SourceSchema
         AND sol.ObjectName = p.SourceObject
-    LEFT JOIN Utility.LineageObjectDefinitions od
+    LEFT JOIN Utility.LNG_ObjectDefinitions od
         ON od.ServerName = p.SourceServer
         AND od.DatabaseName = p.SourceDatabase
         AND od.SchemaName = p.SourceSchema
         AND od.ObjectName = p.SourceObject
 WHERE NOT EXISTS (
     SELECT 1
-    FROM Utility.LineageObjectExpressionDependency e
+    FROM Utility.LNG_ObjectExpressionDependency e
     WHERE
         e.ReferencingServer = p.SourceServer
         AND e.ReferencingDatabase = p.SourceDatabase
@@ -67,25 +67,25 @@ SELECT DISTINCT
     CASE WHEN od.ObjectID IS NOT NULL THEN 1 ELSE 0 END AS IsInObjectDefinitions,
     od.ObjectDefinition
 FROM
-    Utility.LineageObjectExpressionDependency e
-    INNER JOIN Utility.LineageObjectList tol
+    Utility.LNG_ObjectExpressionDependency e
+    INNER JOIN Utility.LNG_ObjectList tol
         ON tol.ServerName = e.referenced_server_name
         AND tol.DatabaseName = e.referenced_database_name
         AND tol.SchemaName = e.referenced_schema_name
         AND tol.ObjectName = e.referenced_entity_name
-    LEFT JOIN Utility.LineageObjectList sol
+    LEFT JOIN Utility.LNG_ObjectList sol
         ON sol.ServerName = e.ReferencingServer
         AND sol.DatabaseName = e.ReferencingDatabase
         AND sol.SchemaName = e.ReferencingSchema
         AND sol.ObjectName = e.ReferencingObject
-    LEFT JOIN Utility.LineageObjectDefinitions od
+    LEFT JOIN Utility.LNG_ObjectDefinitions od
         ON od.ServerName = e.ReferencingServer
         AND od.DatabaseName = e.ReferencingDatabase
         AND od.SchemaName = e.ReferencingSchema
         AND od.ObjectName = e.ReferencingObject
 WHERE NOT EXISTS (
     SELECT 1
-    FROM Utility.LineageObjectParsedDependency p
+    FROM Utility.LNG_ObjectParsedDependency p
     WHERE
         p.SourceServer = e.ReferencingServer
         AND p.SourceDatabase = e.ReferencingDatabase

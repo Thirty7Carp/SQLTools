@@ -1,4 +1,4 @@
-CREATE TABLE Utility.LineageObjectExtendedDependencyLimit (
+CREATE TABLE Utility.LNG_ObjectExtendedDependencyLimit (
     LimitID        BIGINT IDENTITY(1,1) PRIMARY KEY,
     RootServer     NVARCHAR(128) NOT NULL,
     RootDatabase   NVARCHAR(128) NOT NULL,

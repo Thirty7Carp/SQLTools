@@ -1,4 +1,4 @@
-CREATE TABLE Utility.LineageObjectParsedDependency (
+CREATE TABLE Utility.LNG_ObjectParsedDependency (
     ParsedDependencyID BIGINT IDENTITY(1,1) PRIMARY KEY,
     SourceServer NVARCHAR(128) NOT NULL,
     SourceDatabase NVARCHAR(128) NOT NULL,

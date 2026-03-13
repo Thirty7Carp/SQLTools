@@ -1,6 +1,6 @@
-Drop table if exists Utility.LineageObjectExtendedDependency
+Drop table if exists Utility.LNG_ObjectExtendedDependency
 
-CREATE TABLE Utility.LineageObjectExtendedDependency (
+CREATE TABLE Utility.LNG_ObjectExtendedDependency (
     LineageID BIGINT IDENTITY(1,1) PRIMARY KEY,
     RootServer NVARCHAR(128) NOT NULL DEFAULT @@SERVERNAME,
     RootDatabase NVARCHAR(128) NOT NULL,
@@ -18,4 +18,4 @@ CREATE TABLE Utility.LineageObjectExtendedDependency (
     CaptureDate DATETIME DEFAULT GETDATE()
 );
 
-CREATE INDEX IX_DependencyLineage_Root ON Utility.LineageObjectExtendedDependency(RootServer, RootDatabase, RootSchema, RootObject);
+CREATE INDEX IX_LNG_DependencyLineage_Root ON Utility.LNG_ObjectExtendedDependency(RootServer, RootDatabase, RootSchema, RootObject);

@@ -1,4 +1,4 @@
-CREATE VIEW Utility.vwLineageObjectCircularDependency
+CREATE VIEW Utility.LNG_vwObjectCircularDependency
 AS
 SELECT DISTINCT
     d1.SourceServer,
@@ -10,8 +10,8 @@ SELECT DISTINCT
     d1.TargetSchema,
     d1.TargetObject,
     'Circular Reference Detected' AS Issue
-FROM Utility.LineageObjectDirectDependency d1
-INNER JOIN Utility.LineageObjectDirectDependency d2 
+FROM Utility.LNG_ObjectDirectDependency d1
+INNER JOIN Utility.LNG_ObjectDirectDependency d2 
     ON d1.SourceServer = d2.TargetServer
     AND d1.SourceDatabase = d2.TargetDatabase
     AND d1.SourceSchema = d2.TargetSchema

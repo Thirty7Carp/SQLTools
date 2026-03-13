@@ -1,8 +1,8 @@
 # Date & Time Stuff
 
 ## Time
-- Run the Create table script Tables\DimTime
-- Run the stored procedure for DimTime.
+- Run the Create table script Tables\Common.DT_DimTime
+- Run the stored procedure for DT_DimTime.
    
 You now have a DimTime you never need to touch again!
 
@@ -29,7 +29,7 @@ Guide
        
       **You can update this at any time, but when you add new public holiday types, You will need to drop and recreate DimDate**
 
-  - Run the Create table script Tables\DimDate for the first time.
+  - Run the Create table script Tables\Common.DT_DimDate for the first time.
   
   - Execute common.DT_loadDimDate after updating these variables in the script:
     - @FiscalYearStartMMDD = The Month and Day your financial year starts.
@@ -39,4 +39,4 @@ Guide
 
 
     
-**Run LoadDimDate once each day. All relative dates will update, while the keys remain the same.**
+**Run DT_LoadDimDate once each day. All relative dates will update, while the keys remain the same.**

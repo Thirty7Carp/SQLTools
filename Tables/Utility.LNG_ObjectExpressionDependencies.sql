@@ -1,4 +1,4 @@
-CREATE TABLE Utility.LineageObjectExpressionDependency (
+CREATE TABLE Utility.LNG_ObjectExpressionDependency (
     ExpressionDependencyID BIGINT IDENTITY(1,1) PRIMARY KEY,
     ReferencingObjectID INT NOT NULL,
     ReferencingServer NVARCHAR(128) NOT NULL,
