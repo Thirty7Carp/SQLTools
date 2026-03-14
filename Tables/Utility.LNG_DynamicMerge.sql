@@ -1,3 +1,7 @@
+/* 
+This table can be fed by a Dynamic merge metadata store.
+*/
+
 drop table if exists Utility.LNG_DynamicMerge
 
 Create table Utility.LNG_DynamicMerge
@@ -17,10 +21,4 @@ Create table Utility.LNG_DynamicMerge
 , TargetSchemaName        varchar(255)
 , TargetObjectName        varchar(255)
 , TargetObjectType        varchar(255)
-, IsActive                bit             -- Enable or disable a merge without deleting the record
-, SCDType                 varchar(255)    -- Slowly Changing Dimension type
-, ColumnJoin              varchar(max)    -- Columns to match on
-, ColumnValueDiff         varchar(max)    -- Columns to look for a difference in values
-, ColumnIgnore            varchar(max)    -- Columns to ignore for the update
-, DeleteIfNotMatchedBySource bit          -- Bit value to allow partial loads
 )
