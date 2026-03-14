@@ -1,9 +1,9 @@
-CREATE PROCEDURE [Utility].[LoadLineageObjectExpressionDependency]
+CREATE PROCEDURE [Utility].[LNG_LoadObjectExpressionDependency]
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    TRUNCATE TABLE Utility.LineageObjectExpressionDependency;
+    TRUNCATE TABLE Utility.LNG_ObjectExpressionDependency;
 
     DECLARE @DatabaseName NVARCHAR(128);
     DECLARE @SQL NVARCHAR(MAX);
@@ -16,7 +16,7 @@ BEGIN
             AND HAS_DBACCESS(d.name) = 1
             AND NOT EXISTS (
                 SELECT 1
-                FROM Utility.LineageDatabaseExclusions de
+                FROM Utility.LNG_DatabaseExclusions de
                 WHERE de.IsActive = 1
                     AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
                     AND d.name LIKE de.DatabaseName
@@ -29,7 +29,7 @@ BEGIN
     BEGIN
         BEGIN TRY
             SET @SQL = N'
-                INSERT INTO ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageObjectExpressionDependency
+                INSERT INTO ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LNG_ObjectExpressionDependency
                     (
                     ReferencingObjectID,
                     ReferencingServer,
@@ -73,7 +73,7 @@ BEGIN
                     sed.referencing_minor_id = 0
                     AND NOT EXISTS (
                         SELECT 1
-                        FROM ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageDatabaseExclusions de
+                        FROM ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LNG_DatabaseExclusions de
                         WHERE de.IsActive = 1
                             AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
                             AND ISNULL(sed.referenced_database_name, ''' + @DatabaseName + ''') LIKE de.DatabaseName
@@ -84,7 +84,7 @@ BEGIN
 
             DECLARE @RowCount INT;
             SELECT @RowCount = COUNT(*)
-            FROM Utility.LineageObjectExpressionDependency
+            FROM Utility.LNG_ObjectExpressionDependency
             WHERE ReferencingDatabase = @DatabaseName;
 
             PRINT 'Processed database: ' + @DatabaseName + ' - Dependencies captured: ' + CAST(@RowCount AS VARCHAR(20));

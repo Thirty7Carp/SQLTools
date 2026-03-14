@@ -1,11 +1,11 @@
-CREATE PROCEDURE Utility.loadLineageObjectExtendedDependency
+CREATE PROCEDURE Utility.LNG_loadObjectExtendedDependency
     @MaxLevels INT = 20  -- Maximum recursion depth
 AS
 BEGIN
     SET NOCOUNT ON;
     
-    TRUNCATE TABLE Utility.LineageObjectExtendedDependency;
-    TRUNCATE TABLE Utility.LineageObjectExtendedDependencyLimit;
+    TRUNCATE TABLE Utility.LNG_ObjectExtendedDependency;
+    TRUNCATE TABLE Utility.LNG_ObjectExtendedDependencyLimit;
     
     -- Build downstream lineage (what depends on what)
     ;WITH RecursiveDependencies AS (
@@ -24,9 +24,9 @@ BEGIN
             CAST(SourceServer + '.' + SourceDatabase + '.' + SourceSchema + '.' + SourceObject + ' -> ' + 
                  TargetServer + '.' + TargetDatabase + '.' + TargetSchema + '.' + TargetObject AS NVARCHAR(MAX)) AS LineagePath,
             1 AS LineageLevel
-        FROM Utility.LineageObjectDirectDependency od
+        FROM Utility.LNG_ObjectDirectDependency od
         WHERE NOT EXISTS (
-            SELECT 1 FROM Utility.LineageObjectExclusions le
+            SELECT 1 FROM Utility.LNG_ObjectExclusions le
             WHERE le.IsActive = 1
                 AND (le.ServerName IS NULL OR le.ServerName = od.TargetServer)
                 AND (le.DatabaseName IS NULL OR le.DatabaseName = od.TargetDatabase)
@@ -52,7 +52,7 @@ BEGIN
                  od.TargetServer + '.' + od.TargetDatabase + '.' + od.TargetSchema + '.' + od.TargetObject AS NVARCHAR(MAX)),
             rd.LineageLevel + 1
         FROM RecursiveDependencies rd
-        INNER JOIN Utility.LineageObjectDirectDependency od 
+        INNER JOIN Utility.LNG_ObjectDirectDependency od 
             ON rd.DependentServer = od.SourceServer
             AND rd.DependentDatabase = od.SourceDatabase
             AND rd.DependentSchema = od.SourceSchema
@@ -62,7 +62,7 @@ BEGIN
             AND rd.LineagePath NOT LIKE '%' + od.TargetServer + '.' + od.TargetDatabase + '.' + od.TargetSchema + '.' + od.TargetObject + '%'
             -- Exclude objects in exclusion list
             AND NOT EXISTS (
-                SELECT 1 FROM Utility.LineageObjectExclusions le
+                SELECT 1 FROM Utility.LNG_ObjectExclusions le
                 WHERE le.IsActive = 1
                     AND (le.ServerName IS NULL OR le.ServerName = od.TargetServer)
                     AND (le.DatabaseName IS NULL OR le.DatabaseName = od.TargetDatabase)
@@ -70,7 +70,7 @@ BEGIN
                     AND od.TargetObject LIKE le.ObjectName
             )
     )
-    INSERT INTO Utility.LineageObjectExtendedDependency 
+    INSERT INTO Utility.LNG_ObjectExtendedDependency 
         (RootServer, RootDatabase, RootSchema, RootObject, RootObjectType,
          DependentServer, DependentDatabase, DependentSchema, DependentObject, DependentObjectType,
          LineagePath, LineageLevel, LineageDirection)
@@ -82,11 +82,11 @@ BEGIN
     OPTION (MAXRECURSION 0);
 
     -- Record downstream objects that hit the max level limit
-    INSERT INTO Utility.LineageObjectExtendedDependencyLimit
+    INSERT INTO Utility.LNG_ObjectExtendedDependencyLimit
         (RootServer, RootDatabase, RootSchema, RootObject, LineageDirection, MaxLevel)
     SELECT DISTINCT
         RootServer, RootDatabase, RootSchema, RootObject, 'Downstream', @MaxLevels
-    FROM Utility.LineageObjectExtendedDependency
+    FROM Utility.LNG_ObjectExtendedDependency
     WHERE LineageLevel = @MaxLevels
         AND LineageDirection = 'Downstream';
     
@@ -107,9 +107,9 @@ BEGIN
             CAST(TargetServer + '.' + TargetDatabase + '.' + TargetSchema + '.' + TargetObject + ' <- ' + 
                  SourceServer + '.' + SourceDatabase + '.' + SourceSchema + '.' + SourceObject AS NVARCHAR(MAX)) AS LineagePath,
             1 AS LineageLevel
-        FROM Utility.LineageObjectDirectDependency od
+        FROM Utility.LNG_ObjectDirectDependency od
         WHERE NOT EXISTS (
-            SELECT 1 FROM Utility.LineageObjectExclusions le
+            SELECT 1 FROM Utility.LNG_ObjectExclusions le
             WHERE le.IsActive = 1
                 AND (le.ServerName IS NULL OR le.ServerName = od.SourceServer)
                 AND (le.DatabaseName IS NULL OR le.DatabaseName = od.SourceDatabase)
@@ -135,7 +135,7 @@ BEGIN
                  od.SourceServer + '.' + od.SourceDatabase + '.' + od.SourceSchema + '.' + od.SourceObject AS NVARCHAR(MAX)),
             ru.LineageLevel + 1
         FROM RecursiveUpstream ru
-        INNER JOIN Utility.LineageObjectDirectDependency od 
+        INNER JOIN Utility.LNG_ObjectDirectDependency od 
             ON ru.DependentServer = od.TargetServer
             AND ru.DependentDatabase = od.TargetDatabase
             AND ru.DependentSchema = od.TargetSchema
@@ -144,7 +144,7 @@ BEGIN
             AND ru.LineagePath NOT LIKE '%' + od.SourceServer + '.' + od.SourceDatabase + '.' + od.SourceSchema + '.' + od.SourceObject + '%'
             -- Exclude objects in exclusion list
             AND NOT EXISTS (
-                SELECT 1 FROM Utility.LineageObjectExclusions le
+                SELECT 1 FROM Utility.LNG_ObjectExclusions le
                 WHERE le.IsActive = 1
                     AND (le.ServerName IS NULL OR le.ServerName = od.SourceServer)
                     AND (le.DatabaseName IS NULL OR le.DatabaseName = od.SourceDatabase)
@@ -152,7 +152,7 @@ BEGIN
                     AND od.SourceObject LIKE le.ObjectName
             )
     )
-    INSERT INTO Utility.LineageObjectExtendedDependency 
+    INSERT INTO Utility.LNG_ObjectExtendedDependency 
         (RootServer, RootDatabase, RootSchema, RootObject, RootObjectType,
          DependentServer, DependentDatabase, DependentSchema, DependentObject, DependentObjectType,
          LineagePath, LineageLevel, LineageDirection)
@@ -164,14 +164,14 @@ BEGIN
     OPTION (MAXRECURSION 0);
 
     -- Record upstream objects that hit the max level limit
-    INSERT INTO Utility.LineageObjectExtendedDependencyLimit
+    INSERT INTO Utility.LNG_ObjectExtendedDependencyLimit
         (RootServer, RootDatabase, RootSchema, RootObject, LineageDirection, MaxLevel)
     SELECT DISTINCT
         RootServer, RootDatabase, RootSchema, RootObject, 'Upstream', @MaxLevels
-    FROM Utility.LineageObjectExtendedDependency
+    FROM Utility.LNG_ObjectExtendedDependency
     WHERE LineageLevel = @MaxLevels
         AND LineageDirection = 'Upstream';
     
-    SELECT COUNT(*) AS TotalLineagePathsCaptured FROM Utility.LineageObjectExtendedDependency;
+    SELECT COUNT(*) AS TotalLineagePathsCaptured FROM Utility.LNG_ObjectExtendedDependency;
 END
 GO

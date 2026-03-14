@@ -1,9 +1,9 @@
-CREATE PROCEDURE Utility.LoadLineageObjectParsedDependency
+CREATE PROCEDURE Utility.LNG_LoadObjectParsedDependency
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    TRUNCATE TABLE Utility.LineageObjectParsedDependency;
+    TRUNCATE TABLE Utility.LNG_ObjectParsedDependency;
 
     DECLARE @SourceServer NVARCHAR(128);
     DECLARE @SourceDatabase NVARCHAR(128);
@@ -58,7 +58,7 @@ BEGIN
             ObjectType,
             ObjectDefinition
         FROM
-            Utility.LineageObjectDefinitions
+            Utility.LNG_ObjectDefinitions
         WHERE
             ObjectDefinition IS NOT NULL;
 
@@ -189,7 +189,7 @@ BEGIN
 
                     IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
                     BEGIN
-                        INSERT INTO Utility.LineageObjectParsedDependency
+                        INSERT INTO Utility.LNG_ObjectParsedDependency
                             (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                              TargetServer, TargetDatabase, TargetSchema, TargetObject)
                         VALUES
@@ -263,7 +263,7 @@ BEGIN
 
                 IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
                 BEGIN
-                    INSERT INTO Utility.LineageObjectParsedDependency
+                    INSERT INTO Utility.LNG_ObjectParsedDependency
                         (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                          TargetServer, TargetDatabase, TargetSchema, TargetObject)
                     VALUES
@@ -307,7 +307,7 @@ BEGIN
 
             IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
             BEGIN
-                INSERT INTO Utility.LineageObjectParsedDependency
+                INSERT INTO Utility.LNG_ObjectParsedDependency
                     (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                      TargetServer, TargetDatabase, TargetSchema, TargetObject)
                 VALUES
@@ -354,7 +354,7 @@ BEGIN
 
                 IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
                 BEGIN
-                    INSERT INTO Utility.LineageObjectParsedDependency
+                    INSERT INTO Utility.LNG_ObjectParsedDependency
                         (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                          TargetServer, TargetDatabase, TargetSchema, TargetObject)
                     VALUES
@@ -405,7 +405,7 @@ BEGIN
 
             IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
             BEGIN
-                INSERT INTO Utility.LineageObjectParsedDependency
+                INSERT INTO Utility.LNG_ObjectParsedDependency
                     (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                      TargetServer, TargetDatabase, TargetSchema, TargetObject)
                 VALUES
@@ -470,7 +470,7 @@ BEGIN
 
             IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
             BEGIN
-                INSERT INTO Utility.LineageObjectParsedDependency
+                INSERT INTO Utility.LNG_ObjectParsedDependency
                     (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                      TargetServer, TargetDatabase, TargetSchema, TargetObject)
                 VALUES
@@ -527,7 +527,7 @@ BEGIN
 
             IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
             BEGIN
-                INSERT INTO Utility.LineageObjectParsedDependency
+                INSERT INTO Utility.LNG_ObjectParsedDependency
                     (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                      TargetServer, TargetDatabase, TargetSchema, TargetObject)
                 VALUES
@@ -559,7 +559,7 @@ BEGIN
 
                 IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
                 BEGIN
-                    INSERT INTO Utility.LineageObjectParsedDependency
+                    INSERT INTO Utility.LNG_ObjectParsedDependency
                         (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                          TargetServer, TargetDatabase, TargetSchema, TargetObject)
                     VALUES
@@ -604,7 +604,7 @@ BEGIN
                 SET @ObjectRef = SUBSTRING(@Definition, @TokenStart, @TokenEnd - @TokenStart)
 
                 IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
-                    INSERT INTO Utility.LineageObjectParsedDependency
+                    INSERT INTO Utility.LNG_ObjectParsedDependency
                         (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                          TargetServer, TargetDatabase, TargetSchema, TargetObject)
                     VALUES
@@ -654,7 +654,7 @@ BEGIN
 
             IF LEN(@ObjectRef) > 0 AND PARSENAME(@ObjectRef, 1) IS NOT NULL
             BEGIN
-                INSERT INTO Utility.LineageObjectParsedDependency
+                INSERT INTO Utility.LNG_ObjectParsedDependency
                     (SourceServer, SourceDatabase, SourceSchema, SourceObject, OperationType,
                      TargetServer, TargetDatabase, TargetSchema, TargetObject)
                 VALUES

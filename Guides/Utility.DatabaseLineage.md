@@ -26,7 +26,7 @@ Things it won't work with:
 - Create Utility.LNG_ObjectExtendedDependencyLimit - Stores a list of objects where the downstread dependency reaches your desired limit.
 
 ### Stored Procedures for Generating Objects
-- Create Utility.LNG_loadObjectList - Loads LNG_ObjectList.
+- Create Utility.LNG_loadObjectList - Loads LNG_ObjectList. - You need to load the @UtilitySchemaDatabase variable with your database name.
 - Create Utility.LNG_loadObjectDefinitions - Loads LNG_ObjectDefinitions
 - Create Utility.LNG_updateObjectDefinitions_RemoveComments - Removes all the commented codes from LNG_ObjectDefintions. Ensures no commented out values are returned.
 - Create Utility.LNG_updateObjectDefinitions_RemoveWhitespace - Removes carriage returns, tabs, and double spaces in order to make reading the definition easier.

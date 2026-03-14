@@ -1,4 +1,4 @@
-CREATE PROCEDURE [Utility].[updateLineageObjectDefinitions_RemoveWhitespace]
+CREATE PROCEDURE [Utility].[LNG_updateObjectDefinitions_RemoveWhitespace]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -11,7 +11,7 @@ BEGIN
 
     DECLARE cur CURSOR FOR
         SELECT ServerName, DatabaseName, SchemaName, ObjectID, ObjectDefinition
-        FROM Utility.LineageObjectDefinitions;
+        FROM Utility.LNG_ObjectDefinitions;
 
     OPEN cur;
     FETCH NEXT FROM cur INTO @ServerName, @DatabaseName, @SchemaName, @id, @sql;
@@ -45,7 +45,7 @@ BEGIN
         -- Trim leading and trailing spaces
         SET @sql = LTRIM(RTRIM(@sql));
 
-        UPDATE Utility.LineageObjectDefinitions
+        UPDATE Utility.LNG_ObjectDefinitions
         SET ObjectDefinition = @sql
         WHERE
             ServerName = @ServerName

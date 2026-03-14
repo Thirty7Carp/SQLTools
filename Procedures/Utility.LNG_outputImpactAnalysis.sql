@@ -1,5 +1,5 @@
 
-CREATE  PROCEDURE Utility.outputLineageImpactAnalysis
+CREATE  PROCEDURE Utility.LNG_outputImpactAnalysis
     @ServerName NVARCHAR(128) = NULL,  -- NULL defaults to current server
     @DatabaseName NVARCHAR(128),
     @SchemaName NVARCHAR(128),
@@ -18,7 +18,7 @@ BEGIN
         LineageLevel,
         COUNT(DISTINCT DependentServer + '.' + DependentDatabase + '.' + DependentSchema + '.' + DependentObject) AS AffectedObjectCount,
         STRING_AGG(DependentServer + '.' + DependentDatabase + '.' + DependentSchema + '.' + DependentObject, ', ') WITHIN GROUP (ORDER BY DependentServer, DependentDatabase, DependentSchema, DependentObject) AS AffectedObjects
-    FROM Utility.LineageObjectExtendedDependency
+    FROM Utility.LNG_ObjectExtendedDependency
     WHERE RootServer = @ServerName
         AND RootDatabase = @DatabaseName
         AND RootSchema = @SchemaName
@@ -31,7 +31,7 @@ BEGIN
     SELECT 
         COUNT(DISTINCT DependentServer + '.' + DependentDatabase + '.' + DependentSchema + '.' + DependentObject) AS TotalAffectedObjects,
         MAX(LineageLevel) AS MaxDependencyDepth
-    FROM Utility.LineageObjectExtendedDependency
+    FROM Utility.LNG_ObjectExtendedDependency
     WHERE RootServer = @ServerName
         AND RootDatabase = @DatabaseName
         AND RootSchema = @SchemaName

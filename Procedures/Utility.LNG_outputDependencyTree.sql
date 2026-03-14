@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.outputLineageDependencyTree
+CREATE PROCEDURE Utility.LNG_outputDependencyTree
     @ServerName NVARCHAR(128) = NULL,  -- NULL defaults to current server
     @DatabaseName NVARCHAR(128),
     @SchemaName NVARCHAR(128),
@@ -57,7 +57,7 @@ BEGIN
                 END AS NVARCHAR(MAX)),
             CAST(REPLICATE('  ', dt.Level + 1) + '|--' AS NVARCHAR(10))
         FROM DependencyTree dt
-        INNER JOIN Utility.LineageObjectDirectDependency od ON 
+        INNER JOIN Utility.LNG_ObjectDirectDependency od ON 
             (
                 (@Direction = 'Downstream' AND 
                  dt.ServerName = od.TargetServer AND

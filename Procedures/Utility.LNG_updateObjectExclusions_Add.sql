@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.updateLineageObjectExclusions_Add
+CREATE PROCEDURE Utility.LNG_updateObjectExclusions_Add
     @ServerName NVARCHAR(128) = NULL,
     @DatabaseName NVARCHAR(128) = NULL,
     @SchemaName NVARCHAR(128) = NULL,
@@ -8,7 +8,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     
-    INSERT INTO Utility.LineageObjectExclusions (ServerName, DatabaseName, SchemaName, ObjectName, ExclusionReason)
+    INSERT INTO Utility.LNG_ObjectExclusions (ServerName, DatabaseName, SchemaName, ObjectName, ExclusionReason)
     VALUES (@ServerName, @DatabaseName, @SchemaName, @ObjectName, @ExclusionReason);
     
     PRINT 'Exclusion added for: ' + ISNULL(@ServerName + '.', '') + ISNULL(@DatabaseName + '.', '') + 

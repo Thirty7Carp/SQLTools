@@ -1,4 +1,4 @@
-CREATE  PROCEDURE Utility.outputLineageObjectExclusions
+CREATE  PROCEDURE Utility.LNG_outputObjectExclusions
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -13,7 +13,7 @@ BEGIN
         IsActive,
         CreatedDate,
         CreatedBy
-    FROM Utility.LineageObjectExclusions
+    FROM Utility.LNG_ObjectExclusions
     ORDER BY ServerName, DatabaseName, SchemaName, ObjectName;
 END
 GO

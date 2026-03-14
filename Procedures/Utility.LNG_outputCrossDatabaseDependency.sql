@@ -1,4 +1,4 @@
-CREATE  PROCEDURE Utility.outputLineageCrossDatabaseDependency
+CREATE  PROCEDURE Utility.LNG_outputCrossDatabaseDependency
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -14,12 +14,11 @@ BEGIN
         TargetSchema,
         TargetObject,
         TargetType,
-        DependencyType,
         CASE 
             WHEN SourceServer <> TargetServer THEN 'Cross-Server'
             WHEN SourceDatabase <> TargetDatabase THEN 'Cross-Database'
         END AS Scope
-    FROM Utility.LineageObjectDirectDependency
+    FROM Utility.LNG_ObjectDirectDependency
     WHERE SourceServer <> TargetServer 
        OR SourceDatabase <> TargetDatabase
     ORDER BY Scope, SourceServer, SourceDatabase, TargetServer, TargetDatabase, SourceSchema, SourceObject;

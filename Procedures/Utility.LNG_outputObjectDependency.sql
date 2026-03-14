@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.outputLineageObjectDependency
+CREATE PROCEDURE Utility.LNG_outputObjectDependency
     @ServerName NVARCHAR(128) = NULL,  -- NULL defaults to current server
     @DatabaseName NVARCHAR(128),
     @SchemaName NVARCHAR(128),
@@ -23,7 +23,7 @@ BEGIN
             DependentObject,
             DependentObjectType,
             LineagePath
-        FROM Utility.LineageObjectExtendedDependency
+        FROM Utility.LNG_ObjectExtendedDependency
         WHERE RootServer = @ServerName
             AND RootDatabase = @DatabaseName
             AND RootSchema = @SchemaName
@@ -43,7 +43,7 @@ BEGIN
             DependentObject,
             DependentObjectType,
             LineagePath
-        FROM Utility.LineageObjectExtendedDependency
+        FROM Utility.LNG_ObjectExtendedDependency
         WHERE RootServer = @ServerName
             AND RootDatabase = @DatabaseName
             AND RootSchema = @SchemaName

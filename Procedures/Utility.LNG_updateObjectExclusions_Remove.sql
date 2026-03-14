@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.updateLineageObjectExclusions_Remove
+CREATE PROCEDURE Utility.LNG_updateObjectExclusions_Remove
     @ExclusionID BIGINT = NULL,
     @ServerName NVARCHAR(128) = NULL,
     @DatabaseName NVARCHAR(128) = NULL,
@@ -10,12 +10,12 @@ BEGIN
     
     IF @ExclusionID IS NOT NULL
     BEGIN
-        DELETE FROM Utility.LineageObjectExclusions WHERE ExclusionID = @ExclusionID;
+        DELETE FROM Utility.LNG_ObjectExclusions WHERE ExclusionID = @ExclusionID;
         PRINT 'Exclusion removed (ID: ' + CAST(@ExclusionID AS VARCHAR(10)) + ')';
     END
     ELSE
     BEGIN
-        DELETE FROM Utility.LineageObjectExclusions
+        DELETE FROM Utility.LNG_ObjectExclusions
         WHERE (ServerName = @ServerName OR (ServerName IS NULL AND @ServerName IS NULL))
             AND (DatabaseName = @DatabaseName OR (DatabaseName IS NULL AND @DatabaseName IS NULL))
             AND (SchemaName = @SchemaName OR (SchemaName IS NULL AND @SchemaName IS NULL))

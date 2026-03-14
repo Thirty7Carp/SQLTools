@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.loadLineageObjectList
+CREATE PROCEDURE Utility.LNG_loadObjectList
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -9,7 +9,7 @@ BEGIN
     DECLARE @UtilitySchemaDatabase sysname = 'SQLTools';
 
     -- Clear existing data
-    TRUNCATE TABLE Utility.LineageObjectList;
+    TRUNCATE TABLE Utility.LNG_ObjectList;
 
     SET @CursorSQL = N'
         DECLARE db_cursor CURSOR FOR
@@ -19,7 +19,7 @@ BEGIN
             AND HAS_DBACCESS(d.name) = 1
             AND NOT EXISTS (
                 SELECT 1 
-                FROM ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageDatabaseExclusions de
+                FROM ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LNG_DatabaseExclusions de
                 WHERE de.IsActive = 1
                     AND (de.ServerName IS NULL OR de.ServerName = @@SERVERNAME)
                     AND d.name LIKE de.DatabaseName
@@ -38,7 +38,7 @@ BEGIN
             -- Build dynamic SQL for object list extraction
             --------------------------------------------------------------------
             SET @SQL = N'
-            INSERT INTO ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LineageObjectList 
+            INSERT INTO ' + CAST(QUOTENAME(@UtilitySchemaDatabase) AS NVARCHAR(MAX)) + '.Utility.LNG_ObjectList 
                 (ObjectID,ServerName, DatabaseName, SchemaName, ObjectName, ObjectType, ObjectTypeName, CreateDate, ModifyDate)
             SELECT 
                 o.object_id AS ObjectID,

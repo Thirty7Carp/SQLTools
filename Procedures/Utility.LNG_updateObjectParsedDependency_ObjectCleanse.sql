@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.updateLineageObjectParsedDependency_ObjectCleanse
+CREATE PROCEDURE Utility.LNG_updateObjectParsedDependency_ObjectCleanse
 
 AS
 BEGIN
@@ -7,8 +7,8 @@ BEGIN
     
     -- Remove dependencies where target object does not exist in LineageObjectList
     DELETE lpd
-    FROM Utility.LineageObjectParsedDependency lpd
-    LEFT JOIN Utility.LineageObjectList lol
+    FROM Utility.LNG_ObjectParsedDependency lpd
+    LEFT JOIN Utility.LNG_ObjectList lol
         ON  lpd.TargetServer   = lol.ServerName
         AND lpd.TargetDatabase = lol.DatabaseName
         AND lpd.TargetSchema   = lol.SchemaName
@@ -18,11 +18,11 @@ BEGIN
         AND lol.ObjectName IS NULL;
     
     -- Remove duplicate rows keeping the lowest ParsedDependencyID for each unique combination
-    DELETE FROM Utility.LineageObjectParsedDependency
+    DELETE FROM Utility.LNG_ObjectParsedDependency
     WHERE ParsedDependencyID NOT IN 
         (
         SELECT MIN(ParsedDependencyID)
-        FROM Utility.LineageObjectParsedDependency
+        FROM Utility.LNG_ObjectParsedDependency
         GROUP BY
             SourceServer,
             SourceDatabase,
@@ -36,7 +36,7 @@ BEGIN
             )
 
     -- Switch the source and target for Operation Types That call on another item without changing it
-    UPDATE Utility.LineageObjectParsedDependency
+    UPDATE Utility.LNG_ObjectParsedDependency
     SET
         SourceServer   = TargetServer,
         SourceDatabase = TargetDatabase,

@@ -1,5 +1,5 @@
 
-create PROCEDURE [Utility].updateLineageObjectDefinitions_RemoveComments
+create PROCEDURE [Utility].LNG_updateObjectDefinitions_RemoveComments
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -12,7 +12,7 @@ BEGIN
 
     DECLARE cur CURSOR FOR
         SELECT ServerName, DatabaseName, SchemaName, ObjectID, [ObjectDefinition]
-        FROM Utility.LineageObjectDefinitions;
+        FROM Utility.LNG_ObjectDefinitions;
 
     OPEN cur;
     FETCH NEXT FROM cur INTO @ServerName, @DatabaseName, @SchemaName, @id, @sql;
@@ -79,7 +79,7 @@ BEGIN
         -------------------------------------------------------------------
         -- Update the table with cleaned definition
         -------------------------------------------------------------------
-        UPDATE Utility.LineageObjectDefinitions
+        UPDATE Utility.LNG_ObjectDefinitions
         SET [ObjectDefinition] = @sql
         WHERE 
             ServerName = @ServerName

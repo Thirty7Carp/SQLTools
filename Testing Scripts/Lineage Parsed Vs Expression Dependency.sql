@@ -1,3 +1,22 @@
+drop table if exists #ObjectParsedDependencySwitch 
+
+    Select
+        SourceServer =      case when operationtype in ('EXECUTE', 'SELECT') then pd.TargetServer else pd.SourceServer end ,
+        SourceDatabase =    case when operationtype in ('EXECUTE', 'SELECT') then pd.TargetDatabase else pd.SourceDatabase end ,
+        SourceSchema =      case when operationtype in ('EXECUTE', 'SELECT') then pd.TargetSchema else pd.SourceSchema end ,
+        SourceObject =      case when operationtype in ('EXECUTE', 'SELECT') then pd.TargetObject else pd.SourceObject end ,
+        OperationType =     pd.OperationType,       
+        TargetServer =      case when operationtype in ('EXECUTE', 'SELECT') then pd.SourceServer else pd.TargetServer end ,
+        TargetDatabase =    case when operationtype in ('EXECUTE', 'SELECT') then pd.SourceDatabase else pd.TargetDatabase end ,
+        TargetSchema =      case when operationtype in ('EXECUTE', 'SELECT') then pd.SourceSchema else pd.TargetSchema end ,
+        TargetObject =      case when operationtype in ('EXECUTE', 'SELECT') then pd.SourceObject else pd.TargetObject end
+    into
+        #ObjectParsedDependencySwitch 
+    from
+        Utility.LNG_ObjectParsedDependency PD
+    
+
+
 SELECT DISTINCT
     'ParsedOnly' AS ComparisonResult,
     p.SourceServer,
@@ -14,7 +33,7 @@ SELECT DISTINCT
     CASE WHEN od.ObjectID IS NOT NULL THEN 1 ELSE 0 END AS IsInObjectDefinitions,
     od.ObjectDefinition
 FROM
-    Utility.LNG_ObjectParsedDependency p
+    #ObjectParsedDependencySwitch p
     INNER JOIN Utility.LNG_ObjectList tol
         ON tol.ServerName = p.TargetServer
         AND tol.DatabaseName = p.TargetDatabase
@@ -85,7 +104,7 @@ FROM
         AND od.ObjectName = e.ReferencingObject
 WHERE NOT EXISTS (
     SELECT 1
-    FROM Utility.LNG_ObjectParsedDependency p
+    FROM #ObjectParsedDependencySwitch p
     WHERE
         p.SourceServer = e.ReferencingServer
         AND p.SourceDatabase = e.ReferencingDatabase

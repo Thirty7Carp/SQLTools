@@ -1,4 +1,4 @@
-Create PROCEDURE [Utility].[loadLineageObjectDefinitions]
+Create PROCEDURE [Utility].[LNG_loadObjectDefinitions]
 
 AS
 BEGIN
@@ -12,11 +12,11 @@ BEGIN
     DECLARE @SQL NVARCHAR(MAX);
 
     -- Clear out old data if you want a fresh load each run
-    TRUNCATE TABLE Utility.LineageObjectDefinitions;
+    TRUNCATE TABLE Utility.LNG_ObjectDefinitions;
 
     DECLARE obj_cursor CURSOR FOR
     SELECT DatabaseName, SchemaName, ObjectID, ObjectName, ObjectType
-    FROM Utility.LineageObjectList
+    FROM Utility.LNG_ObjectList
     WHERE ObjectTypeName IN (
         'CHECK_CONSTRAINT',
         'DEFAULT_CONSTRAINT',
@@ -35,7 +35,7 @@ BEGIN
         SET @SQL = '
             USE [' + @DatabaseName + '];
 
-            INSERT INTO ' + CAST(QUOTENAME(DB_NAME()) AS NVARCHAR(MAX)) + '.Utility.LineageObjectDefinitions
+            INSERT INTO ' + CAST(QUOTENAME(DB_NAME()) AS NVARCHAR(MAX)) + '.Utility.LNG_ObjectDefinitions
                 (ServerName, DatabaseName, SchemaName, ObjectID, ObjectName, ObjectType, ObjectDefinition)
             SELECT 
                 ''' + @@SERVERNAME + ''',
