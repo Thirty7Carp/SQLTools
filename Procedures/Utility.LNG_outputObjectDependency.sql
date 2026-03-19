@@ -8,7 +8,6 @@ AS
 BEGIN
     SET NOCOUNT ON;
     
-    -- Default to current server if not specified
     IF @ServerName IS NULL
         SET @ServerName = @@SERVERNAME;
     

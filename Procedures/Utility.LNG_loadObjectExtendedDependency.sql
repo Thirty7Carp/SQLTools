@@ -1,5 +1,5 @@
 CREATE PROCEDURE Utility.LNG_loadObjectExtendedDependency
-    @MaxLevels INT = 20  -- Maximum recursion depth
+    @MaxLevels INT = 30  -- Maximum recursion depth
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -7,9 +7,8 @@ BEGIN
     TRUNCATE TABLE Utility.LNG_ObjectExtendedDependency;
     TRUNCATE TABLE Utility.LNG_ObjectExtendedDependencyLimit;
     
-    -- Build downstream lineage (what depends on what)
+ 
     ;WITH RecursiveDependencies AS (
-        -- Base case: direct dependencies
         SELECT 
             SourceServer AS RootServer,
             SourceDatabase AS RootDatabase,
@@ -36,7 +35,7 @@ BEGIN
         
         UNION ALL
         
-        -- Recursive case: follow the chain
+        
         SELECT 
             rd.RootServer,
             rd.RootDatabase,
@@ -60,7 +59,6 @@ BEGIN
         WHERE rd.LineageLevel < @MaxLevels
             -- Prevent circular references
             AND rd.LineagePath NOT LIKE '%' + od.TargetServer + '.' + od.TargetDatabase + '.' + od.TargetSchema + '.' + od.TargetObject + '%'
-            -- Exclude objects in exclusion list
             AND NOT EXISTS (
                 SELECT 1 FROM Utility.LNG_ObjectExclusions le
                 WHERE le.IsActive = 1
@@ -92,7 +90,7 @@ BEGIN
     
     -- Build upstream lineage (what an object depends on)
     ;WITH RecursiveUpstream AS (
-        -- Base case: direct dependencies (reversed)
+       
         SELECT 
             TargetServer AS RootServer,
             TargetDatabase AS RootDatabase,
@@ -119,7 +117,7 @@ BEGIN
         
         UNION ALL
         
-        -- Recursive case: follow upstream
+   
         SELECT 
             ru.RootServer,
             ru.RootDatabase,
@@ -142,7 +140,6 @@ BEGIN
             AND ru.DependentObject = od.TargetObject
         WHERE ru.LineageLevel < @MaxLevels
             AND ru.LineagePath NOT LIKE '%' + od.SourceServer + '.' + od.SourceDatabase + '.' + od.SourceSchema + '.' + od.SourceObject + '%'
-            -- Exclude objects in exclusion list
             AND NOT EXISTS (
                 SELECT 1 FROM Utility.LNG_ObjectExclusions le
                 WHERE le.IsActive = 1

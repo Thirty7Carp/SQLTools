@@ -1,6 +1,6 @@
 drop table if exists Utility.LNG_ObjectDirectDependency
 
--- Store direct dependencies between objects
+
 CREATE TABLE Utility.LNG_ObjectDirectDependency (
     DependencyID BIGINT IDENTITY(1,1) PRIMARY KEY,
     SourceServer NVARCHAR(128) NOT NULL DEFAULT @@SERVERNAME,

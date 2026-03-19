@@ -8,7 +8,6 @@ BEGIN
     DECLARE @DatabaseName NVARCHAR(128);
     DECLARE @UtilitySchemaDatabase sysname = 'SQLTools';
 
-    -- Clear existing data
     TRUNCATE TABLE Utility.LNG_ObjectList;
 
     SET @CursorSQL = N'

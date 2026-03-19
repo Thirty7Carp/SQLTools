@@ -3,7 +3,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Clear existing data
+ 
     TRUNCATE TABLE Common.DT_DimTime;
 
     -- Insert placeholder row for NULL time values

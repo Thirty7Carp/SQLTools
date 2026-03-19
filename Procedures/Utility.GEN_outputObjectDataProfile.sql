@@ -1,6 +1,9 @@
 CREATE PROCEDURE Utility.GEN_outputObjectDataProfile
     @ObjectName NVARCHAR(300)   
+
+/* Testing Example */
 -- EXEC Utility.GEN_outputObjectDataProfile 'Yourdatabase.Yourschema.Yourobjectname'
+
 AS
 BEGIN
     SET NOCOUNT ON;

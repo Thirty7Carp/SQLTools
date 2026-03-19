@@ -85,7 +85,6 @@ BEGIN
     IsYTDYesterday,
     IsFiscalYTDToday,
     IsFiscalYTDYesterday
-    -- Holiday_* and RelativeBusinessDays_* columns also set to 0
 )
 
 VALUES
@@ -176,8 +175,7 @@ VALUES
     0,                 -- IsYTDYesterday
     0,                 -- IsFiscalYTDToday
     0                  -- IsFiscalYTDYesterday
-    -- Holiday_* and RelativeBusinessDays_* columns also set to 0
-);
+  );
 
 
     ;WITH DateSequence AS (
@@ -431,9 +429,6 @@ WHERE c.TABLE_NAME = 'DT_DimDate'
 
 -- Execute the dynamic SQL
 EXEC sp_executesql @HolidayRelativeBusinessDaysSQL, N'@TodayDate DATE', @TodayDate = @TodayDate;
-
-
-
 
 END
 GO

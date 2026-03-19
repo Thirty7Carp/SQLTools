@@ -1,5 +1,3 @@
---TRUNCATE TABLE Utility.LNG_ObjectParsedDependency ;
-
 DECLARE @RowCount INT;
 PRINT '============================================================';
 PRINT 'Step 0: Loading Default Database Exclusions';

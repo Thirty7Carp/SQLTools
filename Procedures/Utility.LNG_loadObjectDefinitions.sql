@@ -11,7 +11,6 @@ BEGIN
     DECLARE @ObjectType NVARCHAR(60);
     DECLARE @SQL NVARCHAR(MAX);
 
-    -- Clear out old data if you want a fresh load each run
     TRUNCATE TABLE Utility.LNG_ObjectDefinitions;
 
     DECLARE obj_cursor CURSOR FOR
@@ -51,7 +50,6 @@ BEGIN
 
         EXEC (@SQL);
 
-        -- Print confirmation in the requested format
         PRINT 'Loaded Definition for ' + @DatabaseName + '.' + CAST(@ObjectID AS NVARCHAR(20));
 
         FETCH NEXT FROM obj_cursor INTO @DatabaseName, @SchemaName, @ObjectID, @ObjectName, @ObjectType;
