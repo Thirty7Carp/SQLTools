@@ -1,4 +1,7 @@
 # Database Lineage Tracking
+
+Currently designed for on prem databases. Update to Azure SQL DB in the works.
+
 A set of tables, views, and stored procedures to help you understand your database dependencies.
 
 This has been built with analysts in mind for when:depends on that database.
