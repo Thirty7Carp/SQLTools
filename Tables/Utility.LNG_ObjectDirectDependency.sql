@@ -1,0 +1,22 @@
+drop table if exists Utility.LNG_ObjectDirectDependency
+
+
+CREATE TABLE Utility.LNG_ObjectDirectDependency (
+    DependencyID BIGINT IDENTITY(1,1) PRIMARY KEY,
+    SourceServer NVARCHAR(128) NOT NULL DEFAULT @@SERVERNAME,
+    SourceDatabase NVARCHAR(128) NOT NULL,
+    SourceSchema NVARCHAR(128) NOT NULL,
+    SourceObject NVARCHAR(128) NOT NULL,
+    SourceType NVARCHAR(60) NOT NULL,
+    TargetServer NVARCHAR(128) NOT NULL DEFAULT @@SERVERNAME,
+    TargetDatabase NVARCHAR(128) NOT NULL,
+    TargetSchema NVARCHAR(128) NOT NULL,
+    TargetObject NVARCHAR(128) NOT NULL,
+    TargetType NVARCHAR(60) NOT NULL,
+    CaptureDate DATETIME DEFAULT GETDATE()
+);
+GO
+
+
+CREATE INDEX IX_LNG_ObjectDependencies_Source ON Utility.LNG_ObjectDirectDependency(SourceServer, SourceDatabase, SourceSchema, SourceObject);
+CREATE INDEX IX_LNG_ObjectDependencies_Target ON Utility.LNG_ObjectDirectDependency(TargetServer, TargetDatabase, TargetSchema, TargetObject);
