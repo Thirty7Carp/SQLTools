@@ -9,6 +9,7 @@ Hopefully this repo will be useful for you if you find yourself TSQL bound.
 # Current Items
 
 Build so far:
+
 - Database Lineage Tracking (LNG) - Shows lineage of objects on your database.
 - Date and Time Dimensions (DT)  - Stores Public Holidays, Date values, Time values.
 - Object summary (GEN) - Details around the columns of an object on your DB.
@@ -17,16 +18,16 @@ Build so far:
 
 # Folder Structure
 
-Guides - Readme files for the different items available.
-Procedures - User Stored Procedures
+- Guides - Readme files for the different items available.
+- Procedures - User Stored Procedures
 	- batch - runs a set of stored procedures
 	- load - runs an initial load of an object
 	- output - returns an output
 	- update - updates values within a table
-Schema - schemas
-Tables - Tables
-Views - Views
-Testing Scripts - Scripts I have made to run demos and populate test objects
+- Schema - schemas
+- Tables - Tables
+- Views - Views
+- Testing Scripts - Scripts I have made to run demos and populate test objects
 
 # Future Goals
 - Metadata driven SCD Merging
