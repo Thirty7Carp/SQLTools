@@ -28,20 +28,25 @@ Tables - Tables
 Views - Views
 Testing Scripts - Scripts I have made to run demos and populate test objects
 
+# Future Goals
+- Metadata driven SCD Merging
+- Easier XML Parsing
+- Geometry Calculations
+- Broken View checking
+- Magic Number / Enumerated Values tracking
+- Looking for ideas!
+
+There's more coming, so stay tuned!
+
 # Special Thanks
 
 Ulrika Panteón - Business Excellence Evangelist - Providing World Class Motivation & Perspective - https://www.linkedin.com/in/ulrika-pante%C3%B3n-501a912b/
+
+Tarun Tuteja - Senior SQL/Boomi Artchitect - Feedback/Testing- https://www.linkedin.com/in/taruntuteja/
 
 St John WA Management - Living and breathing "For the service of humanity"
 
 Bossman Coffee - Mt Lawley, WA - Great coffee and atmosphere - My offfice away from my office - https://www.bossmancoffee.com/
 
-# Future Goals
-- Easier XML Parsing
-- Geometry Calculations
-- Broken View checking
-- Magic Number / Enumerated Values tracking
-- Looking for ideas.
 
-There's more coming, so stay tuned!
 
