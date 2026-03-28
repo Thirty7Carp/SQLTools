@@ -6,7 +6,8 @@ BEGIN
     DECLARE @SQL NVARCHAR(MAX);
     DECLARE @CursorSQL NVARCHAR(MAX);
     DECLARE @DatabaseName NVARCHAR(128);
-    DECLARE @UtilitySchemaDatabase sysname = 'SQLTools';
+    -- Update @UtilitySchemaDatabase with the name of the Database you are deploying your Utility schema and LNG Objects to
+    DECLARE @UtilitySchemaDatabase sysname = 'YourValue';
 
     TRUNCATE TABLE Utility.LNG_ObjectList;
 
