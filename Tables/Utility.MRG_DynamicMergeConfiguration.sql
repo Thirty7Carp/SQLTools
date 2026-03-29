@@ -7,11 +7,10 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
     , QualifiedSourceName           varchar(500)    NOT NULL
     , QualifiedTargetName           varchar(500)    NOT NULL
     , QualifiedTargetHistoryName    varchar(500)    NULL
-    , IsActive                      bit             NOT NULL DEFAULT 1
     /* Merge Rules */
     , SCDType                       varchar(10)     NOT NULL
-    , ColumnMergeOn                 varchar(max)    NOT NULL
-    , ColumnIgnore                  varchar(max)    NULL
+    , MergeOnColumns                varchar(max)    NOT NULL
+    , IgnoreColumns                 varchar(max)    NULL
     , DeleteIfNotMatchedBySource    bit             NOT NULL DEFAULT 0
     /* Target Meta Date Column Names */
     , WH_CreateDateColumnName       varchar(255)    NULL
@@ -36,7 +35,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             MergeConfigurationName          IS NOT NULL
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
-            AND ColumnMergeOn               IS NOT NULL
+            AND MergeOnColumns               IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
@@ -55,7 +54,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             MergeConfigurationName          IS NOT NULL
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
-            AND ColumnMergeOn               IS NOT NULL
+            AND MergeOnColumns               IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
@@ -73,7 +72,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             MergeConfigurationName          IS NOT NULL
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
-            AND ColumnMergeOn               IS NOT NULL
+            AND MergeOnColumns               IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
@@ -91,7 +90,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             MergeConfigurationName          IS NOT NULL
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
-            AND ColumnMergeOn               IS NOT NULL
+            AND MergeOnColumns              IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_VersionColumnName        IS NOT NULL
@@ -110,7 +109,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
             AND QualifiedTargetHistoryName  IS NOT NULL
-            AND ColumnMergeOn               IS NOT NULL
+            AND MergeOnColumns               IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
@@ -123,7 +122,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
 /* Single active row per Configuration name */
 CREATE UNIQUE INDEX UX_UTILITY_MergeConfigurationName_Active
     ON [Utility].[MRG_DynamicMergeConfiguration] (MergeConfigurationName)
-    WHERE IsActive = 1 AND WH_IsDeleted = 0;
+    WHERE WH_IsDeleted = 0;
 
 
 /* Add Cosntraints about what column names must be entered for each type */
