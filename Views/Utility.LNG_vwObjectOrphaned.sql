@@ -1,4 +1,10 @@
-CREATE VIEW Utility.LNG_vwObjectOrphaned
+IF OBJECT_ID(N'Utility.LNG_vwObjectOrphaned', N'V') IS NULL
+BEGIN
+    EXEC('CREATE VIEW Utility.LNG_vwObjectOrphaned AS SELECT 1 AS placeholder');
+END
+GO
+
+ALTER VIEW Utility.LNG_vwObjectOrphaned
 AS
 SELECT 
     o.ServerName,
@@ -15,3 +21,4 @@ WHERE NOT EXISTS (
     WHERE (od.SourceServer = o.ServerName AND od.SourceDatabase = o.DatabaseName AND od.SourceSchema = o.SchemaName AND od.SourceObject = o.ObjectName)
        OR (od.TargetServer = o.ServerName AND od.TargetDatabase = o.DatabaseName AND od.TargetSchema = o.SchemaName AND od.TargetObject = o.ObjectName)
 );
+GO

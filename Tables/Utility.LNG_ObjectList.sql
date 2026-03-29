@@ -1,4 +1,6 @@
-Drop table if exists Utility.LNG_ObjectList
+IF OBJECT_ID(N'Utility.LNG_ObjectList', N'U') IS NULL
+
+BEGIN
 
 -- Store all database objects across all databases
 CREATE TABLE Utility.LNG_ObjectList (
@@ -14,5 +16,6 @@ CREATE TABLE Utility.LNG_ObjectList (
     FullObjectName AS ServerName + '.' + DatabaseName + '.' + SchemaName + '.' + ObjectName,
     CaptureDate DATETIME DEFAULT GETDATE(),
     CONSTRAINT UQ_LNG_DatabaseObjects UNIQUE (ServerName, DatabaseName, SchemaName, ObjectName, ObjectType)
-);
-GO
+)
+
+END

@@ -1,4 +1,6 @@
-drop table if exists Utility.LNG_ObjectDirectDependency
+IF OBJECT_ID(N'Utility.LNG_ObjectDirectDependency', N'U') IS NULL
+
+BEGIN
 
 
 CREATE TABLE Utility.LNG_ObjectDirectDependency (
@@ -14,9 +16,9 @@ CREATE TABLE Utility.LNG_ObjectDirectDependency (
     TargetObject NVARCHAR(128) NOT NULL,
     TargetType NVARCHAR(60) NOT NULL,
     CaptureDate DATETIME DEFAULT GETDATE()
-);
-GO
-
+)
 
 CREATE INDEX IX_LNG_ObjectDependencies_Source ON Utility.LNG_ObjectDirectDependency(SourceServer, SourceDatabase, SourceSchema, SourceObject);
 CREATE INDEX IX_LNG_ObjectDependencies_Target ON Utility.LNG_ObjectDirectDependency(TargetServer, TargetDatabase, TargetSchema, TargetObject);
+
+END

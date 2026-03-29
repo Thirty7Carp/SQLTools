@@ -1,3 +1,7 @@
+IF OBJECT_ID(N'Utility.LNG_ObjectParsedDependency', N'U') IS NULL
+
+BEGIN
+
 CREATE TABLE Utility.LNG_ObjectParsedDependency (
     ParsedDependencyID BIGINT IDENTITY(1,1) PRIMARY KEY,
     SourceServer NVARCHAR(128) NOT NULL,
@@ -10,4 +14,6 @@ CREATE TABLE Utility.LNG_ObjectParsedDependency (
     TargetSchema NVARCHAR(128) NOT NULL,
     TargetObject NVARCHAR(128) NOT NULL,
     CaptureDate DATETIME DEFAULT GETDATE()
-);
+)
+
+END
