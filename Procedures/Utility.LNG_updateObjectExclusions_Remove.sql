@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_updateObjectExclusions_Remove', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_updateObjectExclusions_Remove;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_updateObjectExclusions_Remove
     @ExclusionID BIGINT = NULL,
     @ServerName NVARCHAR(128) = NULL,

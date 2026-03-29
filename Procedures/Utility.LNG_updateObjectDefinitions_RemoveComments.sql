@@ -1,3 +1,7 @@
+IF OBJECT_ID('Utility.LNG_updateObjectDefinitions_RemoveComments', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_updateObjectDefinitions_RemoveComments;
+
+GO
 
 create PROCEDURE [Utility].LNG_updateObjectDefinitions_RemoveComments
 AS

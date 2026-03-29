@@ -1,4 +1,10 @@
-CREATE VIEW Utility.LNG_vwObjectCircularDependency
+IF OBJECT_ID(N'Utility.LNG_vwObjectCircularDependency', N'V') IS NULL
+BEGIN
+    EXEC('CREATE VIEW Utility.LNG_vwObjectCircularDependency AS SELECT 1 AS placeholder');
+END
+GO
+
+ALTER VIEW Utility.LNG_vwObjectCircularDependency
 AS
 SELECT DISTINCT
     d1.SourceServer,
@@ -19,4 +25,5 @@ INNER JOIN Utility.LNG_ObjectDirectDependency d2
     AND d1.TargetServer = d2.SourceServer
     AND d1.TargetDatabase = d2.SourceDatabase
     AND d1.TargetSchema = d2.SourceSchema
-    AND d1.TargetObject = d2.SourceObject;
+    AND d1.TargetObject = d2.SourceObject
+GO

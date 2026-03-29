@@ -1,4 +1,7 @@
-drop table if exists Utility.LNG_ObjectExclusions
+IF OBJECT_ID(N'Utility.LNG_ObjectExclusions', N'U') IS NULL
+
+BEGIN
+
 
 CREATE TABLE Utility.LNG_ObjectExclusions (
     ExclusionID BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -11,4 +14,6 @@ CREATE TABLE Utility.LNG_ObjectExclusions (
     CreatedBy NVARCHAR(128) DEFAULT SUSER_SNAME(),
     IsActive BIT DEFAULT 1,  -- Allow disabling without deleting
     CONSTRAINT UQ_LNG_LineageExclusions UNIQUE (ServerName, DatabaseName, SchemaName, ObjectName)
-);
+)
+
+END

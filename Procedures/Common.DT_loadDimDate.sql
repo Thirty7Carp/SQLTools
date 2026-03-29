@@ -8,6 +8,8 @@ Make sure to:
     - Update the @MinimumDate if you need dates before 1800 for some reason.
     - Update the @MaximumDate if you need dates after 2099 for some reason.
 */
+IF OBJECT_ID('Common.DT_loadDimDate', 'P') IS NOT NULL
+    DROP PROCEDURE Common.DT_loadDimDate;
 
 GO
 

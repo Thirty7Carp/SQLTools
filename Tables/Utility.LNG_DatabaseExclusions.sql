@@ -1,3 +1,7 @@
+IF OBJECT_ID(N'Utility.LNG_DatabaseExclusions', N'U') IS NULL
+
+BEGIN
+
 drop table if exists Utility.LNG_DatabaseExclusions
 
 CREATE TABLE Utility.LNG_DatabaseExclusions (
@@ -9,4 +13,6 @@ CREATE TABLE Utility.LNG_DatabaseExclusions (
     CreatedBy NVARCHAR(128) DEFAULT SUSER_SNAME(),
     IsActive BIT DEFAULT 1,  -- Allow disabling without deleting
     CONSTRAINT UQ_LNG_DatabaseExclusions UNIQUE (ServerName, DatabaseName)
-);
+)
+
+END

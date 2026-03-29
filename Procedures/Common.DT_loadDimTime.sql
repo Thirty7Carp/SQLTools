@@ -1,3 +1,8 @@
+IF OBJECT_ID('Common.DT_loadDimTime', 'P') IS NOT NULL
+    DROP PROCEDURE Common.DT_loadDimTime;
+
+GO
+
 CREATE PROCEDURE Common.DT_loadDimTime
 AS
 BEGIN

@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_outputObjectExclusions', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_outputObjectExclusions;
+
+GO
+
 CREATE  PROCEDURE Utility.LNG_outputObjectExclusions
 AS
 BEGIN

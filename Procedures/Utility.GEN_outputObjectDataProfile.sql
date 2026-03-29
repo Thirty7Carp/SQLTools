@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.GEN_outputObjectDataProfile', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.GEN_outputObjectDataProfile;
+
+GO
+
 CREATE PROCEDURE Utility.GEN_outputObjectDataProfile
     @ObjectName NVARCHAR(300)   
 
