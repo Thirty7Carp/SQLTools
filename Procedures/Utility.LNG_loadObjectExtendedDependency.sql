@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_loadObjectExtendedDependency', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_loadObjectExtendedDependency;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_loadObjectExtendedDependency
     @MaxLevels INT = 30  -- Maximum recursion depth
 AS

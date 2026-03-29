@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_LoadObjectParsedDependency', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_LoadObjectParsedDependency;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_LoadObjectParsedDependency
 AS
 BEGIN

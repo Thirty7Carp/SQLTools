@@ -1,4 +1,9 @@
-﻿Create PROCEDURE Utility.GEN_outputLongPrint
+﻿IF OBJECT_ID('Utility.outputObjectDataProfile', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.outputObjectDataProfile;
+
+GO
+
+Create PROCEDURE Utility.GEN_outputLongPrint
     @sql VARCHAR(MAX)
 AS
 BEGIN

@@ -1,3 +1,7 @@
+IF OBJECT_ID('Utility.LNG_outputImpactAnalysis', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_outputImpactAnalysis;
+
+GO
 
 CREATE  PROCEDURE Utility.LNG_outputImpactAnalysis
     @ServerName NVARCHAR(128) = NULL,  -- NULL defaults to current server
