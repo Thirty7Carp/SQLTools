@@ -43,7 +43,7 @@ There's more coming, so stay tuned!
 
 Ulrika Panteón - Business Excellence Evangelist - Providing World Class Motivation & Perspective - https://www.linkedin.com/in/ulrika-pante%C3%B3n-501a912b/
 
-Tarun Tuteja - Senior SQL/Boomi Artchitect - Feedback/Testing- https://www.linkedin.com/in/taruntuteja/
+Tarun Tuteja - Senior SQL/Boomi Architect - Feedback/Testing- https://www.linkedin.com/in/taruntuteja/
 
 St John WA Management - Living and breathing "For the service of humanity"
 
