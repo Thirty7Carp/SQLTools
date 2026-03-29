@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_updateObjectParsedDependency_ObjectCleanse', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_updateObjectParsedDependency_ObjectCleanse;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_updateObjectParsedDependency_ObjectCleanse
 
 AS

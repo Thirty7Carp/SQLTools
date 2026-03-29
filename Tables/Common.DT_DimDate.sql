@@ -1,6 +1,9 @@
-DECLARE @sql NVARCHAR(MAX);
 
-drop table if exists Common.DT_DimDate
+IF OBJECT_ID(N'Common.DT_DimDate', N'U') IS NULL
+
+BEGIN
+
+DECLARE @sql NVARCHAR(MAX);
 
 -- Base create table script
 SET @sql = '
@@ -91,3 +94,5 @@ ON Common.DT_DimDate (IsWeekend);
 -- Index on Date for faster lookups and range queries
 CREATE NONCLUSTERED INDEX IX_DT_DimDate_Date
 ON Common.DT_DimDate ([Date]);
+
+END

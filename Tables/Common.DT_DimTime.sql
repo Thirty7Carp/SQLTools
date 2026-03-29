@@ -1,4 +1,9 @@
-CREATE TABLE Common.DT_DimTime
+
+IF OBJECT_ID(N'Common.DT_DimDate', N'U') IS NULL
+
+BEGIN
+
+CREATE TABLE Common.DT_DimDate
 (
     DimTime_SK              BIGINT       NOT NULL PRIMARY KEY, -- Surrogate Key
     Time                    TIME(0)      NOT NULL,             -- Full time value (HH:MM:SS)
@@ -26,4 +31,6 @@ CREATE TABLE Common.DT_DimTime
     Interval12_QuarterHour  TIME(0)      NOT NULL,             -- Start of quarter-hour interval (12-hour clock)
     Interval12_HalfHour     TIME(0)      NOT NULL,             -- Start of half-hour interval (12-hour clock)
     Interval12_Hour         TIME(0)      NOT NULL              -- Start of hour interval (12-hour clock)
-);
+)
+
+END

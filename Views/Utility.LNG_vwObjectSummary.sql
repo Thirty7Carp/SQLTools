@@ -1,4 +1,10 @@
-CREATE VIEW Utility.LNG_vwObjectSummary
+IF OBJECT_ID(N'Utility.LNG_vwObjectSummary', N'V') IS NULL
+BEGIN
+    EXEC('CREATE VIEW Utility.LNG_vwObjectSummary AS SELECT 1 AS placeholder');
+END
+GO
+
+ALTER VIEW Utility.LNG_vwObjectSummary
 AS
 SELECT 
     o.ServerName,
@@ -29,3 +35,4 @@ LEFT JOIN (
     AND o.DatabaseName = deps_in.TargetDatabase 
     AND o.SchemaName = deps_in.TargetSchema 
     AND o.ObjectName = deps_in.TargetObject;
+GO

@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_updateObjectDefinitions_RemoveWhitespace', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_updateObjectDefinitions_RemoveWhitespace;
+
+GO
+
 CREATE PROCEDURE [Utility].[LNG_updateObjectDefinitions_RemoveWhitespace]
 AS
 BEGIN

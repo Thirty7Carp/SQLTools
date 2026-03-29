@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_updateDatabaseExclusions_AddDefaults', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_updateDatabaseExclusions_AddDefaults;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_updateDatabaseExclusions_AddDefaults
 AS
 BEGIN

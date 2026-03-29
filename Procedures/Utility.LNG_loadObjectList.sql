@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_loadObjectList', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_loadObjectList;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_loadObjectList
 AS
 BEGIN

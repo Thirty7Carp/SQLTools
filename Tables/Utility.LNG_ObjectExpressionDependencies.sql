@@ -1,3 +1,7 @@
+IF OBJECT_ID(N'Utility.LNG_ObjectExpressionDependency', N'U') IS NULL
+
+BEGIN
+
 CREATE TABLE Utility.LNG_ObjectExpressionDependency (
     ExpressionDependencyID BIGINT IDENTITY(1,1) PRIMARY KEY,
     ReferencingObjectID INT NOT NULL,
@@ -14,4 +18,6 @@ CREATE TABLE Utility.LNG_ObjectExpressionDependency (
     ReferencedObjectType NVARCHAR(60) NULL,
     is_ambiguous BIT NOT NULL,
     CaptureDate DATETIME DEFAULT GETDATE()
-);
+)
+
+END

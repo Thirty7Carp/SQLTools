@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_loadObjectDirectDependency', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_loadObjectDirectDependency;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_loadObjectDirectDependency
 AS
 BEGIN
