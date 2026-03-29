@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_outputObjectDependency', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_outputObjectDependency;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_outputObjectDependency
     @ServerName NVARCHAR(128) = NULL,  -- NULL defaults to current server
     @DatabaseName NVARCHAR(128),

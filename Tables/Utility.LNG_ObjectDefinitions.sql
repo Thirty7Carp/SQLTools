@@ -1,4 +1,8 @@
 
+IF OBJECT_ID(N'Utility.LNG_ObjectDefinitions', N'U') IS NULL
+
+BEGIN
+
 create TABLE [Utility].[LNG_ObjectDefinitions](
 	[ObjectID] [int] NULL,
 	[ServerName] varchar(255) NULL,
@@ -8,3 +12,5 @@ create TABLE [Utility].[LNG_ObjectDefinitions](
 	[ObjectType] [nvarchar](60) NULL,
 	[ObjectDefinition] [nvarchar](max) NULL
 ) 
+
+END

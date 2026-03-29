@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_outputCrossDatabaseDependency', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_outputCrossDatabaseDependency;
+
+GO
+
 CREATE  PROCEDURE Utility.LNG_outputCrossDatabaseDependency
 AS
 BEGIN

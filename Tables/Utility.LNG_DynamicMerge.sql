@@ -2,7 +2,9 @@
 This table can be fed by a Dynamic merge metadata store.
 */
 
-drop table if exists Utility.LNG_DynamicMerge
+IF OBJECT_ID(N'Utility.LNG_DynamicMerge', N'U') IS NULL
+
+BEGIN
 
 Create table Utility.LNG_DynamicMerge
 (
@@ -22,3 +24,5 @@ Create table Utility.LNG_DynamicMerge
 , TargetObjectName        varchar(255)
 , TargetObjectType        varchar(255)
 )
+
+END

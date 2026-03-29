@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_updateDatabaseExclusions_Add', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_updateDatabaseExclusions_Add;
+
+GO
+
 CREATE PROCEDURE Utility.LNG_updateDatabaseExclusions_Add
     @ServerName NVARCHAR(128) = NULL,
     @DatabaseName NVARCHAR(128),

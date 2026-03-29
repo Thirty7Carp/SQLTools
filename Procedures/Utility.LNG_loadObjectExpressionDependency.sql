@@ -1,3 +1,8 @@
+IF OBJECT_ID('Utility.LNG_LoadObjectExpressionDependency', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.LNG_LoadObjectExpressionDependency;
+
+GO
+
 CREATE PROCEDURE [Utility].[LNG_LoadObjectExpressionDependency]
 AS
 BEGIN
