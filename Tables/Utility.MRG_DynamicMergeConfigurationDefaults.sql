@@ -1,0 +1,29 @@
+/* =====================================================================
+   Utility.MRG_DynamicMergeConfigurationDefaults
+   -----------------------------------------------------------------------
+   Stores global default column names for the dynamic merge configuration.
+   These defaults are used when a config row has NULL for a required column
+   name field for its SCD type.
+
+   This means you don't have to specify the defaults every time you insert.
+
+   Only one row can ever exist in this table.
+
+   ===================================================================== */
+CREATE TABLE [Utility].[MRG_DynamicMergeConfigurationDefaults]
+(
+    DynamicMergeConfigurationDefaultsID    int             NOT NULL IDENTITY(1,1)
+    /* Default Target Meta Column Names */
+    , WH_CreateDateColumnName              varchar(255)    NULL
+    , WH_ModifiedDateColumnName            varchar(255)    NULL
+    , WH_ArchivedDateColumnName            varchar(255)    NULL
+    , WH_VersionColumnName                 varchar(255)    NULL
+    , WH_IsCurrentColumnName               varchar(255)    NULL
+    , WH_IsDeletedColumnName               varchar(255)    NULL
+    /* Config Record Meta Data */
+    , WH_CreateDateTime_UTC                datetime2       NOT NULL DEFAULT GETUTCDATE()
+    , WH_ModifiedDateTime_UTC              datetime2       NOT NULL DEFAULT GETUTCDATE()
+    /* Enforce single row */
+    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfigurationDefaults_SingleRow
+        CHECK (DynamicMergeConfigurationDefaultsID = 1)
+);

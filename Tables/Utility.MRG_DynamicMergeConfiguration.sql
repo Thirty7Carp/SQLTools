@@ -1,6 +1,6 @@
-CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
+create TABLE [Utility].[MRG_DynamicMergeConfiguration]
 (
-    DynamicMergeConfigurationID   int               NOT NULL IDENTITY(1,1)
+    DynamicMergeConfigurationID     int             NOT NULL IDENTITY(1,1)
     /* The name used for the execute */
     , MergeConfigurationName        varchar(255)    NOT NULL
     /* Source/Target Objects */
@@ -12,22 +12,34 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
     , MergeOnColumns                varchar(max)    NOT NULL
     , IgnoreColumns                 varchar(max)    NULL
     , DeleteIfNotMatchedBySource    bit             NOT NULL DEFAULT 0
-    /* Target Meta Date Column Names */
+    /* Target Meta Column Names */
     , WH_CreateDateColumnName       varchar(255)    NULL
     , WH_ModifiedDateColumnName     varchar(255)    NULL
+    , WH_ArchivedDateColumnName     varchar(255)    NULL
     , WH_VersionColumnName          varchar(255)    NULL
     , WH_IsCurrentColumnName        varchar(255)    NULL
     , WH_IsDeletedColumnName        varchar(255)    NULL
-    /* Meta Data Column Names */
+    /* Config Record Meta Data */
     , WH_CreateDateTime_UTC         datetime2       NOT NULL DEFAULT GETUTCDATE()
-    , WH_ModifiedDateTime_UTC       datetime2       NULL
+    , WH_ModifiedDateTime_UTC       datetime2       NOT NULL DEFAULT GETUTCDATE()
     , WH_IsDeleted                  bit             NOT NULL DEFAULT 0
     /* Format Checks */
-    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCDType                    CHECK (SCDType IN ('SCD1', 'SCD2Version', 'SCD2Date', 'SCD2DateAndCurrent', 'SCD4'))
-    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_QualifiedSourceName        CHECK (QualifiedSourceName LIKE '%.%.%')
-    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_QualifiedTargetName        CHECK (QualifiedTargetName LIKE '%.%.%')
-    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_QualifiedTargetHistoryName CHECK (QualifiedTargetHistoryName IS NULL OR QualifiedTargetHistoryName LIKE '%.%.%')
-    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD1 CHECK 
+    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCDType
+        CHECK (SCDType IN ('SCD1', 'SCD2Version', 'SCD2Date', 'SCD2DateAndCurrent', 'SCD4'))
+    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_QualifiedSourceName
+        CHECK (QualifiedSourceName LIKE '%.%.%')
+    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_QualifiedTargetName
+        CHECK (QualifiedTargetName LIKE '%.%.%')
+    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_QualifiedTargetHistoryName
+        CHECK (QualifiedTargetHistoryName IS NULL OR QualifiedTargetHistoryName LIKE '%.%.%')
+
+    /* ----------------------------------------------------------------
+       SCD1
+       - No history kept, rows are overwritten
+       - Requires: CreateDate, ModifiedDate, IsDeleted
+       - Must be NULL: TargetHistory, ArchivedDate, Version, IsCurrent
+    ---------------------------------------------------------------- */
+    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD1 CHECK
         (
         SCDType != 'SCD1'
         OR  (
@@ -35,18 +47,26 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             MergeConfigurationName          IS NOT NULL
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
-            AND MergeOnColumns               IS NOT NULL
+            AND MergeOnColumns              IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
+            AND WH_IsDeletedColumnName      IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName  IS NULL
+            AND WH_ArchivedDateColumnName   IS NULL
             AND WH_VersionColumnName        IS NULL
             AND WH_IsCurrentColumnName      IS NULL
             )
         )
+
+    /* ----------------------------------------------------------------
+       SCD2Date
+       - History via date ranges
+       - Requires: CreateDate, ModifiedDate, IsDeleted
+       - Must be NULL: TargetHistory, ArchivedDate, Version, IsCurrent
+    ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD2Date CHECK
-        /* Exactly the same as SCD1, but a Unique Constraint specifically for SCD2 */
         (
         SCDType != 'SCD2Date'
         OR  (
@@ -54,16 +74,25 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             MergeConfigurationName          IS NOT NULL
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
-            AND MergeOnColumns               IS NOT NULL
+            AND MergeOnColumns              IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
+            AND WH_IsDeletedColumnName      IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName  IS NULL
+            AND WH_ArchivedDateColumnName   IS NULL
             AND WH_VersionColumnName        IS NULL
             AND WH_IsCurrentColumnName      IS NULL
             )
         )
+
+    /* ----------------------------------------------------------------
+       SCD2DateAndCurrent
+       - History via date ranges + IsCurrent flag
+       - Requires: CreateDate, ModifiedDate, IsCurrent, IsDeleted
+       - Must be NULL: TargetHistory, ArchivedDate, Version
+    ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD2DateAndCurrent CHECK
         (
         SCDType != 'SCD2DateAndCurrent'
@@ -72,16 +101,25 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             MergeConfigurationName          IS NOT NULL
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
-            AND MergeOnColumns               IS NOT NULL
+            AND MergeOnColumns              IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
             AND WH_IsCurrentColumnName      IS NOT NULL
+            AND WH_IsDeletedColumnName      IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName  IS NULL
+            AND WH_ArchivedDateColumnName   IS NULL
             AND WH_VersionColumnName        IS NULL
             )
         )
+
+    /* ----------------------------------------------------------------
+       SCD2Version
+       - History via version number + IsCurrent flag
+       - Requires: CreateDate, Version, IsCurrent, IsDeleted
+       - Must be NULL: TargetHistory, ArchivedDate, ModifiedDate
+    ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD2Version CHECK
         (
         SCDType != 'SCD2Version'
@@ -95,11 +133,20 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_VersionColumnName        IS NOT NULL
             AND WH_IsCurrentColumnName      IS NOT NULL
+            AND WH_IsDeletedColumnName      IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName  IS NULL
+            AND WH_ArchivedDateColumnName   IS NULL
             AND WH_ModifiedDateColumnName   IS NULL
             )
         )
+
+    /* ----------------------------------------------------------------
+       SCD4
+       - Current row in main table, history in separate history table
+       - Requires: CreateDate, ModifiedDate, TargetHistory, ArchivedDate
+       - Must be NULL: Version, IsCurrent, IsDeleted (deletions go to history)
+    ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD4 CHECK
         (
         SCDType != 'SCD4'
@@ -109,20 +156,20 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND QualifiedSourceName         IS NOT NULL
             AND QualifiedTargetName         IS NOT NULL
             AND QualifiedTargetHistoryName  IS NOT NULL
-            AND MergeOnColumns               IS NOT NULL
+            AND MergeOnColumns              IS NOT NULL
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
+            AND WH_ArchivedDateColumnName   IS NOT NULL
             /* Must be NULL */
             AND WH_VersionColumnName        IS NULL
             AND WH_IsCurrentColumnName      IS NULL
+            AND WH_IsDeletedColumnName      IS NULL
             )
         )
 );
+
 /* Single active row per Configuration name */
 CREATE UNIQUE INDEX UX_UTILITY_MergeConfigurationName_Active
     ON [Utility].[MRG_DynamicMergeConfiguration] (MergeConfigurationName)
     WHERE WH_IsDeleted = 0;
-
-
-/* Add Cosntraints about what column names must be entered for each type */
