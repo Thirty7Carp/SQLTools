@@ -7,10 +7,15 @@
      2. QualifiedTargetName exists in its database INFORMATION_SCHEMA.TABLES
      3. QualifiedTargetHistoryName exists in its database INFORMATION_SCHEMA.TABLES (when not NULL)
      4. All MergeOnColumns exist on both source and target
-     5. All IgnoreColumns exist on the source
+     5. All IgnoreColumns exist on the source. If a WH meta column does not
+        exist on the source, this is a warning only - not a failure.
      6. All required WH meta column names (per SCDType) exist on the target,
         falling back to MRG_DynamicMergeConfigurationDefaults when the config row has NULL
      7. All required WH meta column names are present in IgnoreColumns
+
+   When performing the INSERT or UPDATE, WH meta column name fields are
+   resolved against the defaults table so that the CHECK constraints are
+   satisfied even when the config row does not specify them explicitly.
 
    All string comparisons are case-insensitive.
    On failure: PRINTs each failure, then raises a generic error.
@@ -82,6 +87,8 @@ BEGIN
 
     /* ----------------------------------------------------------------
        Resolve WH meta column names - fall back to defaults where NULL
+       These resolved values are used for both validation and the final
+       INSERT/UPDATE so that CHECK constraints are satisfied.
     ---------------------------------------------------------------- */
     DECLARE
         @Defaults_CreateDate        varchar(255)
@@ -102,6 +109,7 @@ BEGIN
         , @Defaults_UTCOffset       = WH_UTCOffset
     FROM [Utility].[MRG_DynamicMergeConfigurationDefaults];
 
+    /* Resolved values - used for validation AND written to the table */
     DECLARE
         @Resolved_CreateDate        varchar(255)    = ISNULL(@WH_CreateDateColumnName,   @Defaults_CreateDate)
         , @Resolved_ModifiedDate    varchar(255)    = ISNULL(@WH_ModifiedDateColumnName, @Defaults_ModifiedDate)
@@ -110,6 +118,52 @@ BEGIN
         , @Resolved_IsCurrent       varchar(255)    = ISNULL(@WH_IsCurrentColumnName,    @Defaults_IsCurrent)
         , @Resolved_IsDeleted       varchar(255)    = ISNULL(@WH_isDeletedColumnName,    @Defaults_IsDeleted)
         , @Resolved_UTCOffset       smallint        = ISNULL(@WH_UTCOffset, ISNULL(@Defaults_UTCOffset, 0));
+
+    /* For SCD types where a field must be NULL, force it to NULL
+       regardless of what the defaults table contains */
+    IF @SCDType = 'SCD1'
+    BEGIN
+        SET @Resolved_ArchivedDate  = NULL;
+        SET @Resolved_Version       = NULL;
+        SET @Resolved_IsCurrent     = NULL;
+        SET @Resolved_IsDeleted     = NULL;
+    END
+    ELSE IF @SCDType = 'SCD2Date'
+    BEGIN
+        SET @Resolved_ArchivedDate  = NULL;
+        SET @Resolved_Version       = NULL;
+        SET @Resolved_IsCurrent     = NULL;
+    END
+    ELSE IF @SCDType = 'SCD2DateAndCurrent'
+    BEGIN
+        SET @Resolved_ArchivedDate  = NULL;
+        SET @Resolved_Version       = NULL;
+    END
+    ELSE IF @SCDType = 'SCD2Version'
+    BEGIN
+        SET @Resolved_ArchivedDate  = NULL;
+        SET @Resolved_ModifiedDate  = NULL;
+    END
+    ELSE IF @SCDType = 'SCD4'
+    BEGIN
+        SET @Resolved_Version       = NULL;
+        SET @Resolved_IsCurrent     = NULL;
+        SET @Resolved_IsDeleted     = NULL;
+    END;
+
+    /* ----------------------------------------------------------------
+       Build a list of all resolved WH meta column names for reference
+       in the IgnoreColumns validation below
+    ---------------------------------------------------------------- */
+    DECLARE @WHMetaColumns TABLE (ColumnName varchar(255));
+
+    INSERT INTO @WHMetaColumns VALUES
+        (LOWER(@Resolved_CreateDate))
+        , (LOWER(@Resolved_ModifiedDate))
+        , (LOWER(@Resolved_ArchivedDate))
+        , (LOWER(@Resolved_Version))
+        , (LOWER(@Resolved_IsCurrent))
+        , (LOWER(@Resolved_IsDeleted));
 
     /* ----------------------------------------------------------------
        Validation state
@@ -239,6 +293,8 @@ BEGIN
 
     /* ================================================================
        5. Validate IgnoreColumns exist on source (when not NULL)
+          If the column is a WH meta column and does not exist on source,
+          print a warning only - not a failure.
     ================================================================ */
     IF @IgnoreColumns IS NOT NULL
     BEGIN
@@ -267,8 +323,18 @@ BEGIN
 
             IF @Exists = 0
             BEGIN
-                PRINT 'IgnoreColumn [' + @IgnoreCol + '] does not exist on source: ' + @QualifiedSourceName;
-                SET @HasFailures = 1;
+                /* WH meta column not on source - warning only */
+                IF EXISTS (
+                    SELECT 1 FROM @WHMetaColumns
+                    WHERE ColumnName = LOWER(@IgnoreCol)
+                )
+                    PRINT 'Warning: WH meta column [' + @IgnoreCol + '] does not exist on source: ' + @QualifiedSourceName + '. This is expected if it is a target-only column.';
+                ELSE
+                BEGIN
+                    /* User-defined ignore column not on source - fail */
+                    PRINT 'IgnoreColumn [' + @IgnoreCol + '] does not exist on source: ' + @QualifiedSourceName;
+                    SET @HasFailures = 1;
+                END;
             END;
 
             FETCH NEXT FROM ignore_cursor INTO @IgnoreCol;
@@ -397,6 +463,8 @@ BEGIN
 
     /* ================================================================
        Perform the actual INSERT or UPDATE
+       Uses resolved WH column name values so that CHECK constraints
+       are satisfied even when the config row does not specify them.
     ================================================================ */
     IF EXISTS (SELECT 1 FROM deleted)
     BEGIN
@@ -411,13 +479,13 @@ BEGIN
             , IgnoreColumns                 = i.IgnoreColumns
             , DeleteIfNotMatchedBySource    = i.DeleteIfNotMatchedBySource
             , IgnoreIdentityColumns         = i.IgnoreIdentityColumns
-            , WH_CreateDateColumnName       = i.WH_CreateDateColumnName
-            , WH_ModifiedDateColumnName     = i.WH_ModifiedDateColumnName
-            , WH_ArchivedDateColumnName     = i.WH_ArchivedDateColumnName
-            , WH_VersionColumnName          = i.WH_VersionColumnName
-            , WH_IsCurrentColumnName        = i.WH_IsCurrentColumnName
-            , WH_isDeletedColumnName        = i.WH_isDeletedColumnName
-            , WH_UTCOffset                  = i.WH_UTCOffset
+            , WH_CreateDateColumnName       = @Resolved_CreateDate
+            , WH_ModifiedDateColumnName     = @Resolved_ModifiedDate
+            , WH_ArchivedDateColumnName     = @Resolved_ArchivedDate
+            , WH_VersionColumnName          = @Resolved_Version
+            , WH_IsCurrentColumnName        = @Resolved_IsCurrent
+            , WH_isDeletedColumnName        = @Resolved_IsDeleted
+            , WH_UTCOffset                  = @Resolved_UTCOffset
             , WH_IsDeleted                  = i.WH_IsDeleted
             , WH_ModifiedDateTime_UTC       = GETUTCDATE()
         FROM [Utility].[MRG_DynamicMergeConfiguration] tgt
@@ -445,25 +513,26 @@ BEGIN
             , WH_UTCOffset
             , WH_IsDeleted
         )
-        SELECT
-            MergeConfigurationName
-            , QualifiedSourceName
-            , QualifiedTargetName
-            , QualifiedTargetHistoryName
-            , SCDType
-            , MergeOnColumns
-            , IgnoreColumns
-            , DeleteIfNotMatchedBySource
-            , IgnoreIdentityColumns
-            , WH_CreateDateColumnName
-            , WH_ModifiedDateColumnName
-            , WH_ArchivedDateColumnName
-            , WH_VersionColumnName
-            , WH_IsCurrentColumnName
-            , WH_isDeletedColumnName
-            , WH_UTCOffset
-            , WH_IsDeleted
-        FROM inserted;
+        VALUES
+        (
+            @MergeConfigurationName
+            , @QualifiedSourceName
+            , @QualifiedTargetName
+            , @QualifiedTargetHistoryName
+            , @SCDType
+            , @MergeOnColumns
+            , @IgnoreColumns
+            , @DeleteIfNotMatchedBySource
+            , @IgnoreIdentityColumns
+            , @Resolved_CreateDate
+            , @Resolved_ModifiedDate
+            , @Resolved_ArchivedDate
+            , @Resolved_Version
+            , @Resolved_IsCurrent
+            , @Resolved_IsDeleted
+            , @Resolved_UTCOffset
+            , @WH_IsDeleted
+        );
     END;
 
 END;
