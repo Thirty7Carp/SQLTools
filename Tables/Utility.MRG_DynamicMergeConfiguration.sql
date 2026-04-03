@@ -1,4 +1,4 @@
-DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
+CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
 (
     DynamicMergeConfigurationID     int             NOT NULL IDENTITY(1,1)
     /* The name used for the execute */
@@ -12,15 +12,16 @@ DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
     , MergeOnColumns                varchar(max)    NOT NULL
     , IgnoreColumns                 varchar(max)    NULL
     , DeleteIfNotMatchedBySource    bit             NOT NULL DEFAULT 0
+    , IgnoreIdentityColumns         bit             NOT NULL DEFAULT 1
     /* Target Meta Column Names */
     , WH_CreateDateColumnName       varchar(255)    NULL
     , WH_ModifiedDateColumnName     varchar(255)    NULL
     , WH_ArchivedDateColumnName     varchar(255)    NULL
     , WH_VersionColumnName          varchar(255)    NULL
     , WH_IsCurrentColumnName        varchar(255)    NULL
-    , WH_IsDeletedColumnName        varchar(255)    NULL
+    , WH_isDeletedColumnName        varchar(255)    NULL
     /* UTC Offset */
-    , WH_UTCOffset                        smallint        NULL
+    , WH_UTCOffset                  smallint        NULL
     /* Config Record Meta Data */
     , WH_CreateDateTime_UTC         datetime2       NOT NULL DEFAULT GETUTCDATE()
     , WH_ModifiedDateTime_UTC       datetime2       NOT NULL DEFAULT GETUTCDATE()
@@ -38,8 +39,9 @@ DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
     /* ----------------------------------------------------------------
        SCD1
        - No history kept, rows are overwritten
-       - Requires: CreateDate, ModifiedDate, IsDeleted
-       - Must be NULL: TargetHistory, ArchivedDate, Version, IsCurrent
+       - Hard delete if not matched by source
+       - Requires: CreateDate, ModifiedDate
+       - Must be NULL: TargetHistory, ArchivedDate, Version, IsCurrent, IsDeleted
     ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD1 CHECK
         (
@@ -53,12 +55,12 @@ DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
-            AND WH_IsDeletedColumnName      IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName  IS NULL
             AND WH_ArchivedDateColumnName   IS NULL
             AND WH_VersionColumnName        IS NULL
             AND WH_IsCurrentColumnName      IS NULL
+            AND WH_isDeletedColumnName      IS NULL
             )
         )
 
@@ -80,7 +82,7 @@ DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND DeleteIfNotMatchedBySource  IS NOT NULL
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
-            AND WH_IsDeletedColumnName      IS NOT NULL
+            AND WH_isDeletedColumnName      IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName  IS NULL
             AND WH_ArchivedDateColumnName   IS NULL
@@ -108,7 +110,7 @@ DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_ModifiedDateColumnName   IS NOT NULL
             AND WH_IsCurrentColumnName      IS NOT NULL
-            AND WH_IsDeletedColumnName      IS NOT NULL
+            AND WH_isDeletedColumnName      IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName  IS NULL
             AND WH_ArchivedDateColumnName   IS NULL
@@ -135,7 +137,7 @@ DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND WH_CreateDateColumnName     IS NOT NULL
             AND WH_VersionColumnName        IS NOT NULL
             AND WH_IsCurrentColumnName      IS NOT NULL
-            AND WH_IsDeletedColumnName      IS NOT NULL
+            AND WH_isDeletedColumnName      IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName  IS NULL
             AND WH_ArchivedDateColumnName   IS NULL
@@ -166,7 +168,7 @@ DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
             /* Must be NULL */
             AND WH_VersionColumnName        IS NULL
             AND WH_IsCurrentColumnName      IS NULL
-            AND WH_IsDeletedColumnName      IS NULL
+            AND WH_isDeletedColumnName      IS NULL
             )
         )
 );

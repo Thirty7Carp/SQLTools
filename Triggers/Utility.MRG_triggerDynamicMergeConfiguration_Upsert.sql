@@ -41,7 +41,7 @@ BEGIN
         , @WH_ArchivedDateColumnName    varchar(255)
         , @WH_VersionColumnName         varchar(255)
         , @WH_IsCurrentColumnName       varchar(255)
-        , @WH_IsDeletedColumnName       varchar(255)
+        , @WH_isDeletedColumnName       varchar(255)
         , @WH_UTCOffset                 smallint
         , @WH_IsDeleted                 bit;
 
@@ -61,7 +61,7 @@ BEGIN
         , @WH_ArchivedDateColumnName    = WH_ArchivedDateColumnName
         , @WH_VersionColumnName         = WH_VersionColumnName
         , @WH_IsCurrentColumnName       = WH_IsCurrentColumnName
-        , @WH_IsDeletedColumnName       = WH_IsDeletedColumnName
+        , @WH_isDeletedColumnName       = WH_isDeletedColumnName
         , @WH_UTCOffset                 = WH_UTCOffset
         , @WH_IsDeleted                 = WH_IsDeleted
     FROM inserted;
@@ -108,7 +108,7 @@ BEGIN
         , @Resolved_ArchivedDate    varchar(255)    = ISNULL(@WH_ArchivedDateColumnName, @Defaults_ArchivedDate)
         , @Resolved_Version         varchar(255)    = ISNULL(@WH_VersionColumnName,      @Defaults_Version)
         , @Resolved_IsCurrent       varchar(255)    = ISNULL(@WH_IsCurrentColumnName,    @Defaults_IsCurrent)
-        , @Resolved_IsDeleted       varchar(255)    = ISNULL(@WH_IsDeletedColumnName,    @Defaults_IsDeleted)
+        , @Resolved_IsDeleted       varchar(255)    = ISNULL(@WH_isDeletedColumnName,    @Defaults_IsDeleted)
         , @Resolved_UTCOffset       smallint        = ISNULL(@WH_UTCOffset, ISNULL(@Defaults_UTCOffset, 0));
 
     /* ----------------------------------------------------------------
@@ -292,25 +292,24 @@ BEGIN
     IF @SCDType = 'SCD1'
         INSERT INTO @RequiredWHColumns VALUES
             (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
-            , (@Resolved_ModifiedDate, 'WH_ModifiedDateColumnName', 0)
-            , (@Resolved_IsDeleted,    'WH_IsDeletedColumnName',    0);
+            , (@Resolved_ModifiedDate, 'WH_ModifiedDateColumnName', 0);
     ELSE IF @SCDType = 'SCD2Date'
         INSERT INTO @RequiredWHColumns VALUES
             (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
             , (@Resolved_ModifiedDate, 'WH_ModifiedDateColumnName', 0)
-            , (@Resolved_IsDeleted,    'WH_IsDeletedColumnName',    0);
+            , (@Resolved_IsDeleted,    'WH_isDeletedColumnName',    0);
     ELSE IF @SCDType = 'SCD2DateAndCurrent'
         INSERT INTO @RequiredWHColumns VALUES
             (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
             , (@Resolved_ModifiedDate, 'WH_ModifiedDateColumnName', 0)
             , (@Resolved_IsCurrent,    'WH_IsCurrentColumnName',    0)
-            , (@Resolved_IsDeleted,    'WH_IsDeletedColumnName',    0);
+            , (@Resolved_IsDeleted,    'WH_isDeletedColumnName',    0);
     ELSE IF @SCDType = 'SCD2Version'
         INSERT INTO @RequiredWHColumns VALUES
             (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
             , (@Resolved_Version,      'WH_VersionColumnName',      0)
             , (@Resolved_IsCurrent,    'WH_IsCurrentColumnName',    0)
-            , (@Resolved_IsDeleted,    'WH_IsDeletedColumnName',    0);
+            , (@Resolved_IsDeleted,    'WH_isDeletedColumnName',    0);
     ELSE IF @SCDType = 'SCD4'
         INSERT INTO @RequiredWHColumns VALUES
             (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
@@ -417,7 +416,7 @@ BEGIN
             , WH_ArchivedDateColumnName     = i.WH_ArchivedDateColumnName
             , WH_VersionColumnName          = i.WH_VersionColumnName
             , WH_IsCurrentColumnName        = i.WH_IsCurrentColumnName
-            , WH_IsDeletedColumnName        = i.WH_IsDeletedColumnName
+            , WH_isDeletedColumnName        = i.WH_isDeletedColumnName
             , WH_UTCOffset                  = i.WH_UTCOffset
             , WH_IsDeleted                  = i.WH_IsDeleted
             , WH_ModifiedDateTime_UTC       = GETUTCDATE()
@@ -442,7 +441,7 @@ BEGIN
             , WH_ArchivedDateColumnName
             , WH_VersionColumnName
             , WH_IsCurrentColumnName
-            , WH_IsDeletedColumnName
+            , WH_isDeletedColumnName
             , WH_UTCOffset
             , WH_IsDeleted
         )
@@ -461,7 +460,7 @@ BEGIN
             , WH_ArchivedDateColumnName
             , WH_VersionColumnName
             , WH_IsCurrentColumnName
-            , WH_IsDeletedColumnName
+            , WH_isDeletedColumnName
             , WH_UTCOffset
             , WH_IsDeleted
         FROM inserted;
