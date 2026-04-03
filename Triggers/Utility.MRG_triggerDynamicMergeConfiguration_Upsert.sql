@@ -1,5 +1,5 @@
 /* =====================================================================
-   Utility.MRG_TRG_DynamicMergeConfiguration_Upsert
+   Utility.MRG_triggerDynamicMergeConfiguration_Upsert
    -----------------------------------------------------------------------
    Fires on INSERT and UPDATE of Utility.MRG_DynamicMergeConfiguration.
    Validates:
@@ -15,9 +15,8 @@
    All string comparisons are case-insensitive.
    On failure: PRINTs each failure, then raises a generic error.
    ===================================================================== */
-CREATE OR ALTER TRIGGER Utility.MRG_TRG_DynamicMergeConfiguration_Upsert
+CREATE OR ALTER TRIGGER Utility.MRG_triggerDynamicMergeConfiguration_Upsert
 ON [Utility].[MRG_DynamicMergeConfiguration]
-
 INSTEAD OF INSERT, UPDATE
 AS
 BEGIN
@@ -36,12 +35,14 @@ BEGIN
         , @MergeOnColumns               varchar(max)
         , @IgnoreColumns                varchar(max)
         , @DeleteIfNotMatchedBySource   bit
+        , @IgnoreIdentityColumns        bit
         , @WH_CreateDateColumnName      varchar(255)
         , @WH_ModifiedDateColumnName    varchar(255)
         , @WH_ArchivedDateColumnName    varchar(255)
         , @WH_VersionColumnName         varchar(255)
         , @WH_IsCurrentColumnName       varchar(255)
         , @WH_IsDeletedColumnName       varchar(255)
+        , @WH_UTCOffset                 smallint
         , @WH_IsDeleted                 bit;
 
     SELECT
@@ -54,12 +55,14 @@ BEGIN
         , @MergeOnColumns               = MergeOnColumns
         , @IgnoreColumns                = IgnoreColumns
         , @DeleteIfNotMatchedBySource   = DeleteIfNotMatchedBySource
+        , @IgnoreIdentityColumns        = IgnoreIdentityColumns
         , @WH_CreateDateColumnName      = WH_CreateDateColumnName
         , @WH_ModifiedDateColumnName    = WH_ModifiedDateColumnName
         , @WH_ArchivedDateColumnName    = WH_ArchivedDateColumnName
         , @WH_VersionColumnName         = WH_VersionColumnName
         , @WH_IsCurrentColumnName       = WH_IsCurrentColumnName
         , @WH_IsDeletedColumnName       = WH_IsDeletedColumnName
+        , @WH_UTCOffset                 = WH_UTCOffset
         , @WH_IsDeleted                 = WH_IsDeleted
     FROM inserted;
 
@@ -86,15 +89,17 @@ BEGIN
         , @Defaults_ArchivedDate    varchar(255)
         , @Defaults_Version         varchar(255)
         , @Defaults_IsCurrent       varchar(255)
-        , @Defaults_IsDeleted       varchar(255);
+        , @Defaults_IsDeleted       varchar(255)
+        , @Defaults_UTCOffset       smallint;
 
     SELECT
         @Defaults_CreateDate        = WH_CreateDateColumnName
         , @Defaults_ModifiedDate    = WH_ModifiedDateColumnName
         , @Defaults_ArchivedDate    = WH_ArchivedDateColumnName
         , @Defaults_Version         = WH_VersionColumnName
-        , @Defaults_IsCurrent       = WH_IsCurrentColumnName
-        , @Defaults_IsDeleted       = WH_IsDeletedColumnName
+        , @Defaults_IsCurrent       = WH_isCurrentColumnName
+        , @Defaults_IsDeleted       = WH_isDeletedColumnName
+        , @Defaults_UTCOffset       = WH_UTCOffset
     FROM [Utility].[MRG_DynamicMergeConfigurationDefaults];
 
     DECLARE
@@ -103,7 +108,8 @@ BEGIN
         , @Resolved_ArchivedDate    varchar(255)    = ISNULL(@WH_ArchivedDateColumnName, @Defaults_ArchivedDate)
         , @Resolved_Version         varchar(255)    = ISNULL(@WH_VersionColumnName,      @Defaults_Version)
         , @Resolved_IsCurrent       varchar(255)    = ISNULL(@WH_IsCurrentColumnName,    @Defaults_IsCurrent)
-        , @Resolved_IsDeleted       varchar(255)    = ISNULL(@WH_IsDeletedColumnName,    @Defaults_IsDeleted);
+        , @Resolved_IsDeleted       varchar(255)    = ISNULL(@WH_IsDeletedColumnName,    @Defaults_IsDeleted)
+        , @Resolved_UTCOffset       smallint        = ISNULL(@WH_UTCOffset, ISNULL(@Defaults_UTCOffset, 0));
 
     /* ----------------------------------------------------------------
        Validation state
@@ -405,12 +411,14 @@ BEGIN
             , MergeOnColumns                = i.MergeOnColumns
             , IgnoreColumns                 = i.IgnoreColumns
             , DeleteIfNotMatchedBySource    = i.DeleteIfNotMatchedBySource
+            , IgnoreIdentityColumns         = i.IgnoreIdentityColumns
             , WH_CreateDateColumnName       = i.WH_CreateDateColumnName
             , WH_ModifiedDateColumnName     = i.WH_ModifiedDateColumnName
             , WH_ArchivedDateColumnName     = i.WH_ArchivedDateColumnName
             , WH_VersionColumnName          = i.WH_VersionColumnName
             , WH_IsCurrentColumnName        = i.WH_IsCurrentColumnName
             , WH_IsDeletedColumnName        = i.WH_IsDeletedColumnName
+            , WH_UTCOffset                  = i.WH_UTCOffset
             , WH_IsDeleted                  = i.WH_IsDeleted
             , WH_ModifiedDateTime_UTC       = GETUTCDATE()
         FROM [Utility].[MRG_DynamicMergeConfiguration] tgt
@@ -428,12 +436,14 @@ BEGIN
             , MergeOnColumns
             , IgnoreColumns
             , DeleteIfNotMatchedBySource
+            , IgnoreIdentityColumns
             , WH_CreateDateColumnName
             , WH_ModifiedDateColumnName
             , WH_ArchivedDateColumnName
             , WH_VersionColumnName
             , WH_IsCurrentColumnName
             , WH_IsDeletedColumnName
+            , WH_UTCOffset
             , WH_IsDeleted
         )
         SELECT
@@ -445,12 +455,14 @@ BEGIN
             , MergeOnColumns
             , IgnoreColumns
             , DeleteIfNotMatchedBySource
+            , IgnoreIdentityColumns
             , WH_CreateDateColumnName
             , WH_ModifiedDateColumnName
             , WH_ArchivedDateColumnName
             , WH_VersionColumnName
             , WH_IsCurrentColumnName
             , WH_IsDeletedColumnName
+            , WH_UTCOffset
             , WH_IsDeleted
         FROM inserted;
     END;

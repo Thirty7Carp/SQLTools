@@ -7,8 +7,9 @@ INSERT INTO [Utility].[MRG_DynamicMergeConfigurationDefaults]
     , WH_ModifiedDateColumnName
     , WH_ArchivedDateColumnName
     , WH_VersionColumnName
-    , WH_IsCurrentColumnName
-    , WH_IsDeletedColumnName
+    , WH_isCurrentColumnName
+    , WH_isDeletedColumnName
+    , WH_UTCOffset
 )
 VALUES
 (
@@ -16,6 +17,7 @@ VALUES
     , 'WH_ModifiedDateTime_UTC'
     , 'WH_ArchivedDateTime_UTC'
     , 'WH_Version'
-    , 'WH_IsCurrent'
-    , 'WH_IsDeleted'
+    , 'WH_isCurrent'
+    , 'WH_isDeleted'
+    , 0
 );

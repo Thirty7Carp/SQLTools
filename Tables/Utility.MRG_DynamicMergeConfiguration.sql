@@ -1,4 +1,4 @@
-create TABLE [Utility].[MRG_DynamicMergeConfiguration]
+DROP TABLE [Utility].[MRG_DynamicMergeConfiguration]
 (
     DynamicMergeConfigurationID     int             NOT NULL IDENTITY(1,1)
     /* The name used for the execute */
@@ -19,6 +19,8 @@ create TABLE [Utility].[MRG_DynamicMergeConfiguration]
     , WH_VersionColumnName          varchar(255)    NULL
     , WH_IsCurrentColumnName        varchar(255)    NULL
     , WH_IsDeletedColumnName        varchar(255)    NULL
+    /* UTC Offset */
+    , WH_UTCOffset                        smallint        NULL
     /* Config Record Meta Data */
     , WH_CreateDateTime_UTC         datetime2       NOT NULL DEFAULT GETUTCDATE()
     , WH_ModifiedDateTime_UTC       datetime2       NOT NULL DEFAULT GETUTCDATE()
