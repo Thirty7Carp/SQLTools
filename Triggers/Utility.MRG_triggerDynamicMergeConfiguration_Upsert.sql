@@ -15,7 +15,8 @@ GO
         exist on the source, this is a warning only - not a failure.
      6. All required WH meta column names (per SCDType) exist on the target,
         falling back to MRG_DynamicMergeConfigurationDefaults when the config row has NULL
-     7. All required WH meta column names are present in IgnoreColumns
+     7. All required WH meta column names are present in IgnoreColumns.
+        If IgnoreColumns is NULL, it is auto-populated with the required WH meta columns.
 
    When performing the INSERT or UPDATE, WH meta column name fields are
    resolved against the defaults table so that the CHECK constraints are
@@ -35,42 +36,46 @@ BEGIN
        Capture inserted values
     ---------------------------------------------------------------- */
     DECLARE
-        @DynamicMergeConfigurationID    int
-        , @MergeConfigurationName       varchar(255)
-        , @QualifiedSourceName          varchar(500)
-        , @QualifiedTargetName          varchar(500)
-        , @QualifiedTargetHistoryName   varchar(500)
-        , @SCDType                      varchar(10)
-        , @MergeOnColumns               varchar(max)
-        , @IgnoreColumns                varchar(max)
-        , @DeleteIfNotMatchedBySource   bit
-        , @IgnoreIdentityColumns        bit
-        , @WH_CreateDateColumnName      varchar(255)
-        , @WH_ModifiedDateColumnName    varchar(255)
-        , @WH_ArchivedDateColumnName    varchar(255)
-        , @WH_VersionColumnName         varchar(255)
-        , @WH_IsCurrentColumnName       varchar(255)
-        , @WH_isDeletedColumnName       varchar(255)
-        , @WH_UTCOffset                 smallint;
+        @DynamicMergeConfigurationID        int
+        , @MergeConfigurationName           varchar(255)
+        , @QualifiedSourceName              varchar(500)
+        , @QualifiedTargetName              varchar(500)
+        , @QualifiedTargetHistoryName       varchar(500)
+        , @SCDType                          varchar(10)
+        , @MergeOnColumns                   varchar(max)
+        , @IgnoreColumns                    varchar(max)
+        , @DeleteIfNotMatchedBySource       bit
+        , @IgnoreIdentityColumns            bit
+        , @WH_CreateDateColumnName          varchar(255)
+        , @WH_ModifiedDateColumnName        varchar(255)
+        , @WH_RowEffectiveDateColumnName    varchar(255)
+        , @WH_RowExpirationDateColumnName   varchar(255)
+        , @WH_RowEffExDateType              varchar(10)
+        , @WH_VersionColumnName             varchar(255)
+        , @WH_IsCurrentColumnName           varchar(255)
+        , @WH_isDeletedColumnName           varchar(255)
+        , @WH_UTCOffset                     smallint;
 
     SELECT
-        @DynamicMergeConfigurationID    = DynamicMergeConfigurationID
-        , @MergeConfigurationName       = MergeConfigurationName
-        , @QualifiedSourceName          = QualifiedSourceName
-        , @QualifiedTargetName          = QualifiedTargetName
-        , @QualifiedTargetHistoryName   = QualifiedTargetHistoryName
-        , @SCDType                      = SCDType
-        , @MergeOnColumns               = MergeOnColumns
-        , @IgnoreColumns                = IgnoreColumns
-        , @DeleteIfNotMatchedBySource   = DeleteIfNotMatchedBySource
-        , @IgnoreIdentityColumns        = IgnoreIdentityColumns
-        , @WH_CreateDateColumnName      = WH_CreateDateColumnName
-        , @WH_ModifiedDateColumnName    = WH_ModifiedDateColumnName
-        , @WH_ArchivedDateColumnName    = WH_ArchivedDateColumnName
-        , @WH_VersionColumnName         = WH_VersionColumnName
-        , @WH_IsCurrentColumnName       = WH_IsCurrentColumnName
-        , @WH_isDeletedColumnName       = WH_isDeletedColumnName
-        , @WH_UTCOffset                 = WH_UTCOffset
+        @DynamicMergeConfigurationID        = DynamicMergeConfigurationID
+        , @MergeConfigurationName           = MergeConfigurationName
+        , @QualifiedSourceName              = QualifiedSourceName
+        , @QualifiedTargetName              = QualifiedTargetName
+        , @QualifiedTargetHistoryName       = QualifiedTargetHistoryName
+        , @SCDType                          = SCDType
+        , @MergeOnColumns                   = MergeOnColumns
+        , @IgnoreColumns                    = IgnoreColumns
+        , @DeleteIfNotMatchedBySource       = DeleteIfNotMatchedBySource
+        , @IgnoreIdentityColumns            = IgnoreIdentityColumns
+        , @WH_CreateDateColumnName          = WH_CreateDateColumnName
+        , @WH_ModifiedDateColumnName        = WH_ModifiedDateColumnName
+        , @WH_RowEffectiveDateColumnName    = WH_RowEffectiveDateColumnName
+        , @WH_RowExpirationDateColumnName   = WH_RowExpirationDateColumnName
+        , @WH_RowEffExDateType              = WH_RowEffExDateType
+        , @WH_VersionColumnName             = WH_VersionColumnName
+        , @WH_IsCurrentColumnName           = WH_IsCurrentColumnName
+        , @WH_isDeletedColumnName           = WH_isDeletedColumnName
+        , @WH_UTCOffset                     = WH_UTCOffset
     FROM inserted;
 
     /* ----------------------------------------------------------------
@@ -93,64 +98,76 @@ BEGIN
        INSERT/UPDATE so that CHECK constraints are satisfied.
     ---------------------------------------------------------------- */
     DECLARE
-        @Defaults_CreateDate        varchar(255)
-        , @Defaults_ModifiedDate    varchar(255)
-        , @Defaults_ArchivedDate    varchar(255)
-        , @Defaults_Version         varchar(255)
-        , @Defaults_IsCurrent       varchar(255)
-        , @Defaults_IsDeleted       varchar(255)
-        , @Defaults_UTCOffset       smallint;
+        @Defaults_CreateDate            varchar(255)
+        , @Defaults_ModifiedDate        varchar(255)
+        , @Defaults_RowEffectiveDate    varchar(255)
+        , @Defaults_RowExpirationDate   varchar(255)
+        , @Defaults_RowEffExDateType    varchar(10)
+        , @Defaults_Version             varchar(255)
+        , @Defaults_IsCurrent           varchar(255)
+        , @Defaults_IsDeleted           varchar(255)
+        , @Defaults_UTCOffset           smallint;
 
     SELECT
-        @Defaults_CreateDate        = WH_CreateDateColumnName
-        , @Defaults_ModifiedDate    = WH_ModifiedDateColumnName
-        , @Defaults_ArchivedDate    = WH_ArchivedDateColumnName
-        , @Defaults_Version         = WH_VersionColumnName
-        , @Defaults_IsCurrent       = WH_isCurrentColumnName
-        , @Defaults_IsDeleted       = WH_isDeletedColumnName
-        , @Defaults_UTCOffset       = WH_UTCOffset
+        @Defaults_CreateDate            = WH_CreateDateColumnName
+        , @Defaults_ModifiedDate        = WH_ModifiedDateColumnName
+        , @Defaults_RowEffectiveDate    = WH_RowEffectiveDateColumnName
+        , @Defaults_RowExpirationDate   = WH_RowExpirationDateColumnName
+        , @Defaults_RowEffExDateType    = WH_RowEffExDateType
+        , @Defaults_Version             = WH_VersionColumnName
+        , @Defaults_IsCurrent           = WH_isCurrentColumnName
+        , @Defaults_IsDeleted           = WH_isDeletedColumnName
+        , @Defaults_UTCOffset           = WH_UTCOffset
     FROM [Utility].[MRG_DynamicMergeConfigurationDefaults];
 
     /* Resolved values - used for validation AND written to the table */
     DECLARE
-        @Resolved_CreateDate        varchar(255)    = ISNULL(@WH_CreateDateColumnName,   @Defaults_CreateDate)
-        , @Resolved_ModifiedDate    varchar(255)    = ISNULL(@WH_ModifiedDateColumnName, @Defaults_ModifiedDate)
-        , @Resolved_ArchivedDate    varchar(255)    = ISNULL(@WH_ArchivedDateColumnName, @Defaults_ArchivedDate)
-        , @Resolved_Version         varchar(255)    = ISNULL(@WH_VersionColumnName,      @Defaults_Version)
-        , @Resolved_IsCurrent       varchar(255)    = ISNULL(@WH_IsCurrentColumnName,    @Defaults_IsCurrent)
-        , @Resolved_IsDeleted       varchar(255)    = ISNULL(@WH_isDeletedColumnName,    @Defaults_IsDeleted)
-        , @Resolved_UTCOffset       smallint        = ISNULL(@WH_UTCOffset, ISNULL(@Defaults_UTCOffset, 0));
+        @Resolved_CreateDate            varchar(255)    = ISNULL(@WH_CreateDateColumnName,         @Defaults_CreateDate)
+        , @Resolved_ModifiedDate        varchar(255)    = ISNULL(@WH_ModifiedDateColumnName,       @Defaults_ModifiedDate)
+        , @Resolved_RowEffectiveDate    varchar(255)    = ISNULL(@WH_RowEffectiveDateColumnName,   @Defaults_RowEffectiveDate)
+        , @Resolved_RowExpirationDate   varchar(255)    = ISNULL(@WH_RowExpirationDateColumnName,  @Defaults_RowExpirationDate)
+        , @Resolved_RowEffExDateType    varchar(10)     = ISNULL(@WH_RowEffExDateType,             @Defaults_RowEffExDateType)
+        , @Resolved_Version             varchar(255)    = ISNULL(@WH_VersionColumnName,            @Defaults_Version)
+        , @Resolved_IsCurrent           varchar(255)    = ISNULL(@WH_IsCurrentColumnName,          @Defaults_IsCurrent)
+        , @Resolved_IsDeleted           varchar(255)    = ISNULL(@WH_isDeletedColumnName,          @Defaults_IsDeleted)
+        , @Resolved_UTCOffset           smallint        = ISNULL(@WH_UTCOffset, ISNULL(@Defaults_UTCOffset, 0));
 
     /* For SCD types where a field must be NULL, force it to NULL
        regardless of what the defaults table contains */
     IF @SCDType = 'SCD1'
     BEGIN
-        SET @Resolved_ArchivedDate  = NULL;
-        SET @Resolved_Version       = NULL;
-        SET @Resolved_IsCurrent     = NULL;
-        SET @Resolved_IsDeleted     = NULL;
+        SET @Resolved_RowEffectiveDate  = NULL;
+        SET @Resolved_RowExpirationDate = NULL;
+        SET @Resolved_RowEffExDateType  = NULL;
+        SET @Resolved_Version           = NULL;
+        SET @Resolved_IsCurrent         = NULL;
+        SET @Resolved_IsDeleted         = NULL;
     END
     ELSE IF @SCDType = 'SCD2Date'
     BEGIN
-        SET @Resolved_ArchivedDate  = NULL;
-        SET @Resolved_Version       = NULL;
-        SET @Resolved_IsCurrent     = NULL;
+        SET @Resolved_Version           = NULL;
+        SET @Resolved_IsCurrent         = NULL;
     END
     ELSE IF @SCDType = 'SCD2DateAndCurrent'
     BEGIN
-        SET @Resolved_ArchivedDate  = NULL;
-        SET @Resolved_Version       = NULL;
+        SET @Resolved_Version           = NULL;
     END
     ELSE IF @SCDType = 'SCD2Version'
     BEGIN
-        SET @Resolved_ArchivedDate  = NULL;
-        SET @Resolved_ModifiedDate  = NULL;
+        SET @Resolved_ModifiedDate      = NULL;
+        SET @Resolved_RowEffectiveDate  = NULL;
+        SET @Resolved_RowExpirationDate = NULL;
+        SET @Resolved_RowEffExDateType  = NULL;
     END
     ELSE IF @SCDType = 'SCD4'
     BEGIN
-        SET @Resolved_Version       = NULL;
-        SET @Resolved_IsCurrent     = NULL;
-        SET @Resolved_IsDeleted     = NULL;
+        SET @Resolved_ModifiedDate      = NULL;
+        SET @Resolved_RowEffectiveDate  = NULL;
+        SET @Resolved_RowExpirationDate = NULL;
+        SET @Resolved_RowEffExDateType  = NULL;
+        SET @Resolved_Version           = NULL;
+        SET @Resolved_IsCurrent         = NULL;
+        SET @Resolved_IsDeleted         = NULL;
     END;
 
     /* ----------------------------------------------------------------
@@ -163,7 +180,8 @@ BEGIN
     INSERT INTO @WHMetaColumns VALUES
         (LOWER(@Resolved_CreateDate))
         , (LOWER(@Resolved_ModifiedDate))
-        , (LOWER(@Resolved_ArchivedDate))
+        , (LOWER(@Resolved_RowEffectiveDate))
+        , (LOWER(@Resolved_RowExpirationDate))
         , (LOWER(@Resolved_Version))
         , (LOWER(@Resolved_IsCurrent))
         , (LOWER(@Resolved_IsDeleted));
@@ -396,30 +414,32 @@ BEGIN
 
     IF @SCDType = 'SCD1'
         INSERT INTO @RequiredWHColumns VALUES
-            (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
-            , (@Resolved_ModifiedDate, 'WH_ModifiedDateColumnName', 0);
+            (@Resolved_CreateDate,          'WH_CreateDateColumnName',          0)
+            , (@Resolved_ModifiedDate,      'WH_ModifiedDateColumnName',        0);
     ELSE IF @SCDType = 'SCD2Date'
         INSERT INTO @RequiredWHColumns VALUES
-            (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
-            , (@Resolved_ModifiedDate, 'WH_ModifiedDateColumnName', 0)
-            , (@Resolved_IsDeleted,    'WH_isDeletedColumnName',    0);
+            (@Resolved_CreateDate,          'WH_CreateDateColumnName',          0)
+            , (@Resolved_ModifiedDate,      'WH_ModifiedDateColumnName',        0)
+            , (@Resolved_IsDeleted,         'WH_isDeletedColumnName',           0)
+            , (@Resolved_RowEffectiveDate,  'WH_RowEffectiveDateColumnName',    0)
+            , (@Resolved_RowExpirationDate, 'WH_RowExpirationDateColumnName',   0);
     ELSE IF @SCDType = 'SCD2DateAndCurrent'
         INSERT INTO @RequiredWHColumns VALUES
-            (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
-            , (@Resolved_ModifiedDate, 'WH_ModifiedDateColumnName', 0)
-            , (@Resolved_IsCurrent,    'WH_IsCurrentColumnName',    0)
-            , (@Resolved_IsDeleted,    'WH_isDeletedColumnName',    0);
+            (@Resolved_CreateDate,          'WH_CreateDateColumnName',          0)
+            , (@Resolved_ModifiedDate,      'WH_ModifiedDateColumnName',        0)
+            , (@Resolved_IsCurrent,         'WH_IsCurrentColumnName',           0)
+            , (@Resolved_IsDeleted,         'WH_isDeletedColumnName',           0)
+            , (@Resolved_RowEffectiveDate,  'WH_RowEffectiveDateColumnName',    0)
+            , (@Resolved_RowExpirationDate, 'WH_RowExpirationDateColumnName',   0);
     ELSE IF @SCDType = 'SCD2Version'
         INSERT INTO @RequiredWHColumns VALUES
-            (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
-            , (@Resolved_Version,      'WH_VersionColumnName',      0)
-            , (@Resolved_IsCurrent,    'WH_IsCurrentColumnName',    0)
-            , (@Resolved_IsDeleted,    'WH_isDeletedColumnName',    0);
+            (@Resolved_CreateDate,          'WH_CreateDateColumnName',          0)
+            , (@Resolved_Version,           'WH_VersionColumnName',             0)
+            , (@Resolved_IsCurrent,         'WH_IsCurrentColumnName',           0)
+            , (@Resolved_IsDeleted,         'WH_isDeletedColumnName',           0);
     ELSE IF @SCDType = 'SCD4'
         INSERT INTO @RequiredWHColumns VALUES
-            (@Resolved_CreateDate,   'WH_CreateDateColumnName',   0)
-            , (@Resolved_ModifiedDate, 'WH_ModifiedDateColumnName', 0)
-            , (@Resolved_ArchivedDate, 'WH_ArchivedDateColumnName', 1);
+            (@Resolved_CreateDate,          'WH_CreateDateColumnName',          0);
 
     DECLARE
         @WHCol          varchar(255)
@@ -453,7 +473,7 @@ BEGIN
             SET @HasFailures = 1;
         END;
 
-        /* Check column exists on history table (SCD4 ArchivedDate only) */
+        /* Check column exists on history table (SCD4 only) */
         IF @WHHistory = 1 AND @QualifiedTargetHistoryName IS NOT NULL
         BEGIN
             SET @SQL = N'
@@ -509,23 +529,25 @@ BEGIN
     BEGIN
         UPDATE tgt
         SET
-            MergeConfigurationName          = i.MergeConfigurationName
-            , QualifiedSourceName           = i.QualifiedSourceName
-            , QualifiedTargetName           = i.QualifiedTargetName
-            , QualifiedTargetHistoryName    = i.QualifiedTargetHistoryName
-            , SCDType                       = i.SCDType
-            , MergeOnColumns                = i.MergeOnColumns
-            , IgnoreColumns                 = i.IgnoreColumns
-            , DeleteIfNotMatchedBySource    = i.DeleteIfNotMatchedBySource
-            , IgnoreIdentityColumns         = i.IgnoreIdentityColumns
-            , WH_CreateDateColumnName       = @Resolved_CreateDate
-            , WH_ModifiedDateColumnName     = @Resolved_ModifiedDate
-            , WH_ArchivedDateColumnName     = @Resolved_ArchivedDate
-            , WH_VersionColumnName          = @Resolved_Version
-            , WH_IsCurrentColumnName        = @Resolved_IsCurrent
-            , WH_isDeletedColumnName        = @Resolved_IsDeleted
-            , WH_UTCOffset                  = @Resolved_UTCOffset
-            , WH_ModifiedDateTime_UTC       = GETUTCDATE()
+            MergeConfigurationName              = i.MergeConfigurationName
+            , QualifiedSourceName               = i.QualifiedSourceName
+            , QualifiedTargetName               = i.QualifiedTargetName
+            , QualifiedTargetHistoryName        = i.QualifiedTargetHistoryName
+            , SCDType                           = i.SCDType
+            , MergeOnColumns                    = i.MergeOnColumns
+            , IgnoreColumns                     = @IgnoreColumns
+            , DeleteIfNotMatchedBySource        = i.DeleteIfNotMatchedBySource
+            , IgnoreIdentityColumns             = i.IgnoreIdentityColumns
+            , WH_CreateDateColumnName           = @Resolved_CreateDate
+            , WH_ModifiedDateColumnName         = @Resolved_ModifiedDate
+            , WH_RowEffectiveDateColumnName     = @Resolved_RowEffectiveDate
+            , WH_RowExpirationDateColumnName    = @Resolved_RowExpirationDate
+            , WH_RowEffExDateType               = @Resolved_RowEffExDateType
+            , WH_VersionColumnName              = @Resolved_Version
+            , WH_IsCurrentColumnName            = @Resolved_IsCurrent
+            , WH_isDeletedColumnName            = @Resolved_IsDeleted
+            , WH_UTCOffset                      = @Resolved_UTCOffset
+            , WH_ModifiedDateTime_UTC           = GETUTCDATE()
         FROM [Utility].[MRG_DynamicMergeConfiguration] tgt
         INNER JOIN inserted i ON tgt.DynamicMergeConfigurationID = i.DynamicMergeConfigurationID;
     END
@@ -544,7 +566,9 @@ BEGIN
             , IgnoreIdentityColumns
             , WH_CreateDateColumnName
             , WH_ModifiedDateColumnName
-            , WH_ArchivedDateColumnName
+            , WH_RowEffectiveDateColumnName
+            , WH_RowExpirationDateColumnName
+            , WH_RowEffExDateType
             , WH_VersionColumnName
             , WH_IsCurrentColumnName
             , WH_isDeletedColumnName
@@ -563,7 +587,9 @@ BEGIN
             , @IgnoreIdentityColumns
             , @Resolved_CreateDate
             , @Resolved_ModifiedDate
-            , @Resolved_ArchivedDate
+            , @Resolved_RowEffectiveDate
+            , @Resolved_RowExpirationDate
+            , @Resolved_RowEffExDateType
             , @Resolved_Version
             , @Resolved_IsCurrent
             , @Resolved_IsDeleted

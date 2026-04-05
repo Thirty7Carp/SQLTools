@@ -13,10 +13,12 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfigurationDefaults]
     /* Default Target Meta Column Names */
     , WH_CreateDateColumnName              varchar(255)    NULL
     , WH_ModifiedDateColumnName            varchar(255)    NULL
-    , WH_ArchivedDateColumnName            varchar(255)    NULL
+    , WH_RowEffectiveDateColumnName        varchar(255)    NULL
+    , WH_RowExpirationDateColumnName       varchar(255)    NULL
+    , WH_RowEffExDateType                  varchar(10)     NULL
     , WH_VersionColumnName                 varchar(255)    NULL
-    , WH_IsCurrentColumnName               varchar(255)    NULL
-    , WH_IsDeletedColumnName               varchar(255)    NULL
+    , WH_isCurrentColumnName               varchar(255)    NULL
+    , WH_isDeletedColumnName               varchar(255)    NULL
     /* UTC Offset */
     , WH_UTCOffset                         smallint        NULL
     /* Config Record Meta Data */
@@ -25,4 +27,6 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfigurationDefaults]
     /* Enforce single row */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfigurationDefaults_SingleRow
         CHECK (DynamicMergeConfigurationDefaultsID = 1)
+    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfigurationDefaults_WH_RowEffExDateType
+        CHECK (WH_RowEffExDateType IS NULL OR WH_RowEffExDateType IN ('date', 'datetime', 'datetime2'))
 );
