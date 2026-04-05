@@ -1,3 +1,7 @@
+IF OBJECT_ID('Utility.MRG_triggerDynamicMergeConfiguration_Upsert', 'TR') IS NOT NULL
+    DROP TRIGGER Utility.MRG_triggerDynamicMergeConfiguration_Upsert;
+GO
+
 /* =====================================================================
    Utility.MRG_triggerDynamicMergeConfiguration_Upsert
    -----------------------------------------------------------------------
@@ -20,7 +24,7 @@
    All string comparisons are case-insensitive.
    On failure: PRINTs each failure, then raises a generic error.
    ===================================================================== */
-CREATE OR ALTER TRIGGER Utility.MRG_triggerDynamicMergeConfiguration_Upsert
+CREATE TRIGGER Utility.MRG_triggerDynamicMergeConfiguration_Upsert
 ON [Utility].[MRG_DynamicMergeConfiguration]
 INSTEAD OF INSERT, UPDATE
 AS
@@ -47,8 +51,7 @@ BEGIN
         , @WH_VersionColumnName         varchar(255)
         , @WH_IsCurrentColumnName       varchar(255)
         , @WH_isDeletedColumnName       varchar(255)
-        , @WH_UTCOffset                 smallint
-        , @WH_IsDeleted                 bit;
+        , @WH_UTCOffset                 smallint;
 
     SELECT
         @DynamicMergeConfigurationID    = DynamicMergeConfigurationID
@@ -68,7 +71,6 @@ BEGIN
         , @WH_IsCurrentColumnName       = WH_IsCurrentColumnName
         , @WH_isDeletedColumnName       = WH_isDeletedColumnName
         , @WH_UTCOffset                 = WH_UTCOffset
-        , @WH_IsDeleted                 = WH_IsDeleted
     FROM inserted;
 
     /* ----------------------------------------------------------------
@@ -153,7 +155,8 @@ BEGIN
 
     /* ----------------------------------------------------------------
        Build a list of all resolved WH meta column names for reference
-       in the IgnoreColumns validation below
+       in the IgnoreColumns validation below.
+       Only includes columns that are required for this SCD type (not NULL).
     ---------------------------------------------------------------- */
     DECLARE @WHMetaColumns TABLE (ColumnName varchar(255));
 
@@ -164,6 +167,42 @@ BEGIN
         , (LOWER(@Resolved_Version))
         , (LOWER(@Resolved_IsCurrent))
         , (LOWER(@Resolved_IsDeleted));
+
+    -- Remove NULLs (columns not required for this SCD type)
+    DELETE FROM @WHMetaColumns WHERE ColumnName IS NULL;
+
+    /* ----------------------------------------------------------------
+       Auto-populate IgnoreColumns with any WH meta column names
+       that are not already present. If IgnoreColumns is NULL, it will
+       be set to the WH meta column names for this SCD type.
+    ---------------------------------------------------------------- */
+    DECLARE @WHMetaCol varchar(255);
+
+    DECLARE whmeta_cursor CURSOR LOCAL FAST_FORWARD FOR
+        SELECT ColumnName FROM @WHMetaColumns;
+
+    OPEN whmeta_cursor;
+    FETCH NEXT FROM whmeta_cursor INTO @WHMetaCol;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM STRING_SPLIT(ISNULL(@IgnoreColumns, ''), ',')
+            WHERE LOWER(TRIM(CAST(value AS varchar(255)))) = LOWER(@WHMetaCol)
+        )
+        BEGIN
+            IF @IgnoreColumns IS NULL
+                SET @IgnoreColumns = @WHMetaCol;
+            ELSE
+                SET @IgnoreColumns = @IgnoreColumns + ',' + @WHMetaCol;
+        END;
+
+        FETCH NEXT FROM whmeta_cursor INTO @WHMetaCol;
+    END;
+
+    CLOSE whmeta_cursor;
+    DEALLOCATE whmeta_cursor;
 
     /* ----------------------------------------------------------------
        Validation state
@@ -486,7 +525,6 @@ BEGIN
             , WH_IsCurrentColumnName        = @Resolved_IsCurrent
             , WH_isDeletedColumnName        = @Resolved_IsDeleted
             , WH_UTCOffset                  = @Resolved_UTCOffset
-            , WH_IsDeleted                  = i.WH_IsDeleted
             , WH_ModifiedDateTime_UTC       = GETUTCDATE()
         FROM [Utility].[MRG_DynamicMergeConfiguration] tgt
         INNER JOIN inserted i ON tgt.DynamicMergeConfigurationID = i.DynamicMergeConfigurationID;
@@ -511,7 +549,6 @@ BEGIN
             , WH_IsCurrentColumnName
             , WH_isDeletedColumnName
             , WH_UTCOffset
-            , WH_IsDeleted
         )
         VALUES
         (
@@ -531,7 +568,6 @@ BEGIN
             , @Resolved_IsCurrent
             , @Resolved_IsDeleted
             , @Resolved_UTCOffset
-            , @WH_IsDeleted
         );
     END;
 

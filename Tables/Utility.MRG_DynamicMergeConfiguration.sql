@@ -25,7 +25,6 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
     /* Config Record Meta Data */
     , WH_CreateDateTime_UTC         datetime2       NOT NULL DEFAULT GETUTCDATE()
     , WH_ModifiedDateTime_UTC       datetime2       NOT NULL DEFAULT GETUTCDATE()
-    , WH_IsDeleted                  bit             NOT NULL DEFAULT 0
     /* Format Checks */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCDType
         CHECK (SCDType IN ('SCD1', 'SCD2Version', 'SCD2Date', 'SCD2DateAndCurrent', 'SCD4'))
@@ -173,7 +172,6 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
         )
 );
 
-/* Single active row per Configuration name */
-CREATE UNIQUE INDEX UX_UTILITY_MergeConfigurationName_Active
-    ON [Utility].[MRG_DynamicMergeConfiguration] (MergeConfigurationName)
-    WHERE WH_IsDeleted = 0;
+/* One row per configuration name */
+CREATE UNIQUE INDEX UX_UTILITY_MergeConfigurationName
+    ON [Utility].[MRG_DynamicMergeConfiguration] (MergeConfigurationName);

@@ -1,3 +1,7 @@
+IF OBJECT_ID('Utility.MRG_processSCD1', 'P') IS NOT NULL
+    DROP PROCEDURE Utility.MRG_processSCD1;
+GO
+
 /* =====================================================================
    Utility.MRG_processSCD1
    -----------------------------------------------------------------------
@@ -16,7 +20,7 @@
      @MergeConfigurationName : Name of the config row to use
      @DebugMode              : 1 = PRINT dynamic SQL instead of executing
    ===================================================================== */
-CREATE OR ALTER PROCEDURE Utility.MRG_processSCD1
+CREATE PROCEDURE Utility.MRG_processSCD1
     @MergeConfigurationName     varchar(255)
     , @DebugMode                bit             = 0
 AS
@@ -44,13 +48,20 @@ BEGIN
         , @IgnoreColumns                = cfg.IgnoreColumns
         , @DeleteIfNotMatchedBySource   = cfg.DeleteIfNotMatchedBySource
         , @IgnoreIdentityColumns        = cfg.IgnoreIdentityColumns
-        , @WH_CreateDateColumnName      = ISNULL(cfg.WH_CreateDateColumnName,   def.WH_CreateDateColumnName)
-        , @WH_ModifiedDateColumnName    = ISNULL(cfg.WH_ModifiedDateColumnName, def.WH_ModifiedDateColumnName)
-        , @WH_UTCOffset                 = ISNULL(cfg.WH_UTCOffset, ISNULL(def.WH_UTCOffset, 0))
+        , @WH_CreateDateColumnName      = cfg.WH_CreateDateColumnName
+        , @WH_ModifiedDateColumnName    = cfg.WH_ModifiedDateColumnName
+        , @WH_UTCOffset                 = ISNULL(cfg.WH_UTCOffset, 0)
     FROM Utility.MRG_DynamicMergeConfiguration cfg
-    CROSS JOIN Utility.MRG_DynamicMergeConfigurationDefaults def
-    WHERE cfg.MergeConfigurationName = @MergeConfigurationName
-      AND cfg.WH_IsDeleted = 0;
+    WHERE cfg.MergeConfigurationName = @MergeConfigurationName;
+
+    /* ----------------------------------------------------------------
+       Validate config was found
+    ---------------------------------------------------------------- */
+    IF @QualifiedSourceName IS NULL
+    BEGIN
+        RAISERROR('Merge configuration [%s] was not found.', 16, 1, @MergeConfigurationName);
+        RETURN;
+    END;
 
     /* ----------------------------------------------------------------
        Parse qualified names into parts
@@ -70,8 +81,7 @@ BEGIN
 
     /* ----------------------------------------------------------------
        Build excluded columns list
-       Excludes: MergeOnColumns, IgnoreColumns, WH meta columns,
-                 and identity columns on target (if IgnoreIdentityColumns = 1)
+       Excludes: MergeOnColumns, IgnoreColumns, WH meta columns
     ---------------------------------------------------------------- */
     DECLARE @ExcludedColumns TABLE (ColumnName varchar(255));
 
@@ -94,32 +104,65 @@ BEGIN
         , (LOWER(@WH_ModifiedDateColumnName));
 
     /* ----------------------------------------------------------------
-       Build update/except column lists via cursor
-       Cross-references source and target columns, excluding identity
-       columns on the target when IgnoreIdentityColumns = 1
+       Build update/except column lists via dynamic SQL cursor
+       Queries the correct database for source and target columns
     ---------------------------------------------------------------- */
     DECLARE
         @UpdateColumnList   varchar(max)    = ''
         , @ExceptSourceList varchar(max)    = ''
         , @ExceptTargetList varchar(max)    = ''
-        , @ColName          varchar(255);
+        , @InsertColList    varchar(max)    = ''
+        , @InsertValList    varchar(max)    = ''
+        , @MergeOnCondition varchar(max)    = ''
+        , @ColName          varchar(255)
+        , @SQL              nvarchar(max)
+        , @ParamDef         nvarchar(500);
 
+    /* ----------------------------------------------------------------
+       Use dynamic SQL to query the correct database for column discovery
+       since INFORMATION_SCHEMA must be queried with a database prefix.
+       COLUMNPROPERTY runs in the target database context via USE.
+    ---------------------------------------------------------------- */
+
+    /* Execute and store results in temp table since we can't pass
+       table variables to sp_executesql without a TVP type.
+       Instead we use a local temp table. */
+    IF OBJECT_ID('tempdb..#DiscoveredColumns') IS NOT NULL
+        DROP TABLE #DiscoveredColumns;
+
+    CREATE TABLE #DiscoveredColumns
+    (
+        ColumnName      varchar(255)
+        , IsIdentity    bit
+    );
+
+    SET @SQL = N'
+        USE [' + @TargetDB + '];
+        INSERT INTO #DiscoveredColumns (ColumnName, IsIdentity)
+        SELECT
+            src.COLUMN_NAME
+            , ISNULL(COLUMNPROPERTY(
+                OBJECT_ID(''' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + '''),
+                src.COLUMN_NAME,
+                ''IsIdentity''), 0)
+        FROM [' + @SourceDB + '].INFORMATION_SCHEMA.COLUMNS src
+        INNER JOIN [' + @TargetDB + '].INFORMATION_SCHEMA.COLUMNS tgt
+            ON LOWER(tgt.TABLE_SCHEMA) = LOWER(''' + @TargetSchema + ''')
+            AND LOWER(tgt.TABLE_NAME)  = LOWER(''' + @TargetTable  + ''')
+            AND LOWER(tgt.COLUMN_NAME) = LOWER(src.COLUMN_NAME)
+        WHERE LOWER(src.TABLE_SCHEMA) = LOWER(''' + @SourceSchema + ''')
+          AND LOWER(src.TABLE_NAME)   = LOWER(''' + @SourceTable  + ''')';
+
+    EXEC sp_executesql @SQL;
+
+    /* ----------------------------------------------------------------
+       Build column lists from discovered columns
+    ---------------------------------------------------------------- */
     DECLARE col_cursor CURSOR LOCAL FAST_FORWARD FOR
-        SELECT QUOTENAME(CAST(src.COLUMN_NAME AS varchar(max)))
-        FROM sys.columns tgt_col
-        INNER JOIN sys.objects tgt_obj  ON tgt_col.object_id = tgt_obj.object_id
-        INNER JOIN sys.schemas tgt_sch  ON tgt_obj.schema_id = tgt_sch.schema_id
-        CROSS APPLY (
-            SELECT COLUMN_NAME
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE LOWER(TABLE_SCHEMA) = LOWER(@SourceSchema)
-              AND LOWER(TABLE_NAME)   = LOWER(@SourceTable)
-              AND LOWER(COLUMN_NAME)  = LOWER(CAST(tgt_col.name AS varchar(255)))
-        ) src
-        WHERE LOWER(tgt_sch.name)                           = LOWER(@TargetSchema)
-          AND LOWER(tgt_obj.name)                           = LOWER(@TargetTable)
-          AND LOWER(CAST(tgt_col.name AS varchar(255)))     NOT IN (SELECT ColumnName FROM @ExcludedColumns)
-          AND (@IgnoreIdentityColumns = 0 OR tgt_col.is_identity = 0);
+        SELECT QUOTENAME(ColumnName)
+        FROM #DiscoveredColumns
+        WHERE LOWER(ColumnName) NOT IN (SELECT ColumnName FROM @ExcludedColumns)
+          AND (@IgnoreIdentityColumns = 0 OR IsIdentity = 0);
 
     OPEN col_cursor;
     FETCH NEXT FROM col_cursor INTO @ColName;
@@ -129,6 +172,8 @@ BEGIN
         SET @UpdateColumnList   = @UpdateColumnList  + '        tgt.' + @ColName + ' = src.' + @ColName + CHAR(13) + CHAR(10) + '        , ';
         SET @ExceptSourceList   = @ExceptSourceList  + '        src.' + @ColName + CHAR(13) + CHAR(10) + '        , ';
         SET @ExceptTargetList   = @ExceptTargetList  + '        tgt.' + @ColName + CHAR(13) + CHAR(10) + '        , ';
+        SET @InsertColList      = @InsertColList     + '        ' + @ColName + CHAR(13) + CHAR(10) + '        , ';
+        SET @InsertValList      = @InsertValList     + '        src.' + @ColName + CHAR(13) + CHAR(10) + '        , ';
 
         FETCH NEXT FROM col_cursor INTO @ColName;
     END;
@@ -136,17 +181,24 @@ BEGIN
     CLOSE col_cursor;
     DEALLOCATE col_cursor;
 
-    /* Remove trailing commas */
-    SET @UpdateColumnList   = LEFT(@UpdateColumnList,   LEN(@UpdateColumnList)   - 3);
-    SET @ExceptSourceList   = LEFT(@ExceptSourceList,   LEN(@ExceptSourceList)   - 3);
-    SET @ExceptTargetList   = LEFT(@ExceptTargetList,   LEN(@ExceptTargetList)   - 3);
+    DROP TABLE #DiscoveredColumns;
+
+    /* Remove trailing commas - only if strings are not empty */
+    IF LEN(@UpdateColumnList) > 0
+        SET @UpdateColumnList = LEFT(@UpdateColumnList, LEN(@UpdateColumnList) - 3);
+    IF LEN(@ExceptSourceList) > 0
+        SET @ExceptSourceList = LEFT(@ExceptSourceList, LEN(@ExceptSourceList) - 3);
+    IF LEN(@ExceptTargetList) > 0
+        SET @ExceptTargetList = LEFT(@ExceptTargetList, LEN(@ExceptTargetList) - 3);
+    IF LEN(@InsertColList) > 0
+        SET @InsertColList = LEFT(@InsertColList, LEN(@InsertColList) - 3);
+    IF LEN(@InsertValList) > 0
+        SET @InsertValList = LEFT(@InsertValList, LEN(@InsertValList) - 3);
 
     /* ----------------------------------------------------------------
        Build MergeOn join condition
     ---------------------------------------------------------------- */
-    DECLARE
-        @MergeOnCondition   varchar(max)    = ''
-        , @MergeOnCol       varchar(255);
+    DECLARE @MergeOnCol varchar(255);
 
     DECLARE mergeon_cursor CURSOR LOCAL FAST_FORWARD FOR
         SELECT QUOTENAME(TRIM(CAST(value AS varchar(255))))
@@ -162,6 +214,10 @@ BEGIN
             SET @MergeOnCondition = @MergeOnCondition + CHAR(13) + CHAR(10) + '      AND ';
         SET @MergeOnCondition = @MergeOnCondition + 'tgt.' + @MergeOnCol + ' = src.' + @MergeOnCol;
 
+        /* Add MergeOn columns to INSERT lists */
+        SET @InsertColList = @InsertColList + CASE WHEN @InsertColList <> '' THEN CHAR(13) + CHAR(10) + '        , ' ELSE '        ' END + @MergeOnCol;
+        SET @InsertValList = @InsertValList + CASE WHEN @InsertValList <> '' THEN CHAR(13) + CHAR(10) + '        , ' ELSE '        ' END + 'src.' + @MergeOnCol;
+
         FETCH NEXT FROM mergeon_cursor INTO @MergeOnCol;
     END;
 
@@ -169,72 +225,15 @@ BEGIN
     DEALLOCATE mergeon_cursor;
 
     /* ----------------------------------------------------------------
-       Build INSERT column and value lists
-       (MergeOn columns + update columns + WH meta columns)
+       Add WH meta columns to INSERT lists
     ---------------------------------------------------------------- */
-    DECLARE
-        @InsertColList  varchar(max)    = ''
-        , @InsertValList varchar(max)   = ''
-        , @MergeOnCol2  varchar(255);
-
-    /* Add MergeOn columns */
-    DECLARE mergeon_cursor2 CURSOR LOCAL FAST_FORWARD FOR
-        SELECT QUOTENAME(TRIM(CAST(value AS varchar(255))))
-        FROM STRING_SPLIT(@MergeOnColumns, ',')
-        WHERE TRIM(CAST(value AS varchar(255))) <> '';
-
-    OPEN mergeon_cursor2;
-    FETCH NEXT FROM mergeon_cursor2 INTO @MergeOnCol2;
-
-    WHILE @@FETCH_STATUS = 0
-    BEGIN
-        SET @InsertColList = @InsertColList + '        ' + @MergeOnCol2 + CHAR(13) + CHAR(10) + '        , ';
-        SET @InsertValList = @InsertValList + '        src.' + @MergeOnCol2 + CHAR(13) + CHAR(10) + '        , ';
-        FETCH NEXT FROM mergeon_cursor2 INTO @MergeOnCol2;
-    END;
-
-    CLOSE mergeon_cursor2;
-    DEALLOCATE mergeon_cursor2;
-
-    /* Add update columns */
-    DECLARE col_cursor2 CURSOR LOCAL FAST_FORWARD FOR
-        SELECT QUOTENAME(CAST(src.COLUMN_NAME AS varchar(max)))
-        FROM sys.columns tgt_col
-        INNER JOIN sys.objects tgt_obj  ON tgt_col.object_id = tgt_obj.object_id
-        INNER JOIN sys.schemas tgt_sch  ON tgt_obj.schema_id = tgt_sch.schema_id
-        CROSS APPLY (
-            SELECT COLUMN_NAME
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE LOWER(TABLE_SCHEMA) = LOWER(@SourceSchema)
-              AND LOWER(TABLE_NAME)   = LOWER(@SourceTable)
-              AND LOWER(COLUMN_NAME)  = LOWER(CAST(tgt_col.name AS varchar(255)))
-        ) src
-        WHERE LOWER(tgt_sch.name)                           = LOWER(@TargetSchema)
-          AND LOWER(tgt_obj.name)                           = LOWER(@TargetTable)
-          AND LOWER(CAST(tgt_col.name AS varchar(255)))     NOT IN (SELECT ColumnName FROM @ExcludedColumns)
-          AND (@IgnoreIdentityColumns = 0 OR tgt_col.is_identity = 0);
-
-    OPEN col_cursor2;
-    FETCH NEXT FROM col_cursor2 INTO @ColName;
-
-    WHILE @@FETCH_STATUS = 0
-    BEGIN
-        SET @InsertColList = @InsertColList + '        ' + @ColName + CHAR(13) + CHAR(10) + '        , ';
-        SET @InsertValList = @InsertValList + '        src.' + @ColName + CHAR(13) + CHAR(10) + '        , ';
-        FETCH NEXT FROM col_cursor2 INTO @ColName;
-    END;
-
-    CLOSE col_cursor2;
-    DEALLOCATE col_cursor2;
-
-    /* Add WH meta columns - SCD1 has no IsDeleted */
     SET @InsertColList = @InsertColList
-        + '        ' + QUOTENAME(@WH_CreateDateColumnName)   + CHAR(13) + CHAR(10) + '        , '
-        + '        ' + QUOTENAME(@WH_ModifiedDateColumnName);
+        + CHAR(13) + CHAR(10) + '        , ' + QUOTENAME(@WH_CreateDateColumnName)
+        + CHAR(13) + CHAR(10) + '        , ' + QUOTENAME(@WH_ModifiedDateColumnName);
 
     SET @InsertValList = @InsertValList
-        + '        ''' + CONVERT(varchar, @Now, 121) + '''' + CHAR(13) + CHAR(10) + '        , '
-        + '        ''' + CONVERT(varchar, @Now, 121) + '''';
+        + CHAR(13) + CHAR(10) + '        , ''' + CONVERT(varchar, @Now, 121) + ''''
+        + CHAR(13) + CHAR(10) + '        , ''' + CONVERT(varchar, @Now, 121) + '''';
 
     /* ----------------------------------------------------------------
        Build final MERGE statement
