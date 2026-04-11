@@ -23,6 +23,7 @@ Build so far:
 	- batch - runs a set of stored procedures
 	- load - runs an initial load of an object
 	- output - returns an output
+	- process - Drives a metadata driven interaction between objects
 	- update - updates values within a table
 - Schema - schemas
 - Tables - Tables
