@@ -13,7 +13,9 @@
      5. Row exists in both, NULL int becomes a value           -> UPDATE
      6. Row exists in source only (new record)                 -> INSERT
      7. Row exists in source with NULLs in varchar and int     -> INSERT
-     8. Row exists in target only                              -> Hard DELETE
+     8. Row exists in target only                              -> No action (DeleteIfNotMatchedBySource = 0)
+
+   Merge key: CustomerID (int) + DateOfBirth (date)
 
    Objects created:
      TestData.Test.MRG_SCD1_Source
@@ -32,10 +34,11 @@ GO
 CREATE TABLE TestData.Test.MRG_SCD1_Source
 (
     CustomerID      int             NOT NULL
+    , DateOfBirth   date            NOT NULL
     , FirstName     varchar(100)    NULL
     , LastName      varchar(100)    NULL
     , Email         varchar(255)    NULL
-    , Country       varchar(100)     NULL
+    , Country       varchar(100)    NULL
     , Age           int             NULL
     , LoyaltyPoints int             NULL
 );
@@ -53,10 +56,11 @@ GO
 CREATE TABLE TestData.Test.MRG_SCD1_Target
 (
     CustomerID              int             NOT NULL
+    , DateOfBirth           date            NOT NULL
     , FirstName             varchar(100)    NULL
     , LastName              varchar(100)    NULL
     , Email                 varchar(255)    NULL
-    , Country               varchar(100)     NULL
+    , Country               varchar(100)    NULL
     , Age                   int             NULL
     , LoyaltyPoints         int             NULL
     , WH_CreateDateTime_UTC     datetime2   NOT NULL
@@ -76,15 +80,15 @@ GO
    CustomerID 7  - New record, FirstName and Age are NULL
 ================================================================ */
 INSERT INTO TestData.Test.MRG_SCD1_Source
-(CustomerID, FirstName, LastName, Email, Country, Age, LoyaltyPoints)
+(CustomerID, DateOfBirth, FirstName, LastName, Email, Country, Age, LoyaltyPoints)
 VALUES
-    (1, 'Alice',  'Smith',   'alice@example.com',    'Australia',   30,   100)   -- No change
-    , (2, 'Bob',  'Jones',   'bob.new@example.com',  'Australia',   25,   200)   -- Email changed
-    , (3, 'Carol','White',   'carol@example.com',    'New Zealand', 35,   300)   -- Age changed
-    , (4, 'Dave', 'Brown',   'dave@example.com',     'Australia',   40,   400)   -- FirstName NULL -> value
-    , (5, 'Eve',  'Taylor',  'eve@example.com',      'Australia',   28,   500)   -- LoyaltyPoints NULL -> value
-    , (6, 'Frank','Wilson',  'frank@example.com',    'Australia',   45,   600)   -- New record
-    , (7, NULL,   'Davies',  NULL,                   'Australia',   NULL, NULL); -- New record with NULLs
+    (1, '1990-01-01', 'Alice',  'Smith',  'alice@example.com',    'Australia',   30,   100)   -- No change
+    , (2, '1992-05-15', 'Bob',  'Jones',  'bob.new@example.com',  'Australia',   25,   200)   -- Email changed
+    , (3, '1985-11-30', 'Carol','White',  'carol@example.com',    'New Zealand', 35,   300)   -- Age changed
+    , (4, '1980-07-04', 'Dave', 'Brown',  'dave@example.com',     'Australia',   40,   400)   -- FirstName NULL -> value
+    , (5, '1995-03-22', 'Eve',  'Taylor', 'eve@example.com',      'Australia',   28,   500)   -- LoyaltyPoints NULL -> value
+    , (6, '1988-09-10', 'Frank','Wilson', 'frank@example.com',    'Australia',   45,   600)   -- New record
+    , (7, '1993-12-25', NULL,   'Davies', NULL,                   'Australia',   NULL, NULL); -- New record with NULLs
 
 /* ================================================================
    STEP 4 - Insert target data
@@ -96,14 +100,14 @@ VALUES
    CustomerID 8  - Exists in target only                       -> No action (DeleteIfNotMatchedBySource = 0)
 ================================================================ */
 INSERT INTO TestData.Test.MRG_SCD1_Target
-(CustomerID, FirstName, LastName, Email, Country, Age, LoyaltyPoints, WH_CreateDateTime_UTC, WH_ModifiedDateTime_UTC)
+(CustomerID, DateOfBirth, FirstName, LastName, Email, Country, Age, LoyaltyPoints, WH_CreateDateTime_UTC, WH_ModifiedDateTime_UTC)
 VALUES
-    (1, NULL, NULL,  NULL,    NULL,   NULL,   NULL,  '2024-01-01', '2024-01-01')  -- No change
-    , (2, 'Bob', NULL,  'bob.old@example.com',  'Australia',   25,   200,  '2024-01-01', '2024-01-01')  -- Email will update
-    , (3, NULL,'White', 'carol@example.com',    'New Zealand', 28,   300,  '2024-01-01', '2024-01-01')  -- Age will update
-    , (4, NULL,  'Brown',  NULL,                   'Australia',   40,   400,  '2024-01-01', '2024-01-01')  -- FirstName NULL -> value
-    , (5, 'Eve', 'Taylor', 'eve@example.com',      'Australia',   28,   NULL, '2024-01-01', '2024-01-01')  -- LoyaltyPoints NULL -> value
-    , (8, 'Grace','Hall',  'grace@example.com',    'Australia',   33,   700,  '2024-01-01', '2024-01-01'); -- No action, delete not enabled
+    (1, '1990-01-01', 'Alice', 'Smith',  'alice@example.com',    'Australia',   30,   100,  '2024-01-01', '2024-01-01')  -- No change
+    , (2, '1992-05-15', 'Bob', 'Jones',  'bob.old@example.com',  'Australia',   25,   200,  '2024-01-01', '2024-01-01')  -- Email will update
+    , (3, '1985-11-30', NULL,  'White',  'carol@example.com',    'New Zealand', 28,   300,  '2024-01-01', '2024-01-01')  -- Age will update
+    , (4, '1980-07-04', NULL,  'Brown',  NULL,                   'Australia',   40,   400,  '2024-01-01', '2024-01-01')  -- FirstName NULL -> value
+    , (5, '1995-03-22', 'Eve', 'Taylor', 'eve@example.com',      'Australia',   28,   NULL, '2024-01-01', '2024-01-01')  -- LoyaltyPoints NULL -> value
+    , (8, '1975-06-18', 'Grace','Hall',  'grace@example.com',    'Australia',   33,   700,  '2024-01-01', '2024-01-01'); -- No action, delete not enabled
 
 /* ================================================================
    STEP 5 - Show state BEFORE merge
@@ -144,7 +148,7 @@ VALUES
     , 'TestData.Test.MRG_SCD1_Source'
     , 'TestData.Test.MRG_SCD1_Target'
     , 'SCD1'
-    , 'CustomerID'
+    , 'CustomerID,DateOfBirth'
     , NULL
     , 1
     , 1
