@@ -75,9 +75,11 @@ BEGIN
         , @TargetTable      varchar(255)    = PARSENAME(@QualifiedTargetName, 1);
 
     /* ----------------------------------------------------------------
-       Resolve current timestamp with UTC offset
+       Build the timestamp expression used in dynamic SQL.
+       Evaluated at row-write time rather than procedure start time.
     ---------------------------------------------------------------- */
-    DECLARE @Now datetime2 = DATEADD(MINUTE, @WH_UTCOffset, GETUTCDATE());
+    DECLARE @NowExpression varchar(100) =
+        'DATEADD(MINUTE, ' + CAST(@WH_UTCOffset AS varchar(10)) + ', GETUTCDATE())';
 
     /* ----------------------------------------------------------------
        Build excluded columns list
@@ -104,29 +106,9 @@ BEGIN
         , (LOWER(@WH_ModifiedDateColumnName));
 
     /* ----------------------------------------------------------------
-       Build update/except column lists via dynamic SQL cursor
-       Queries the correct database for source and target columns
+       Discover shared columns between source and target.
+       Uses sys.columns for reliable cross-database identity detection.
     ---------------------------------------------------------------- */
-    DECLARE
-        @UpdateColumnList   varchar(max)    = ''
-        , @ExceptSourceList varchar(max)    = ''
-        , @ExceptTargetList varchar(max)    = ''
-        , @InsertColList    varchar(max)    = ''
-        , @InsertValList    varchar(max)    = ''
-        , @MergeOnCondition varchar(max)    = ''
-        , @ColName          varchar(255)
-        , @SQL              nvarchar(max)
-        , @ParamDef         nvarchar(500);
-
-    /* ----------------------------------------------------------------
-       Use dynamic SQL to query the correct database for column discovery
-       since INFORMATION_SCHEMA must be queried with a database prefix.
-       COLUMNPROPERTY runs in the target database context via USE.
-    ---------------------------------------------------------------- */
-
-    /* Execute and store results in temp table since we can't pass
-       table variables to sp_executesql without a TVP type.
-       Instead we use a local temp table. */
     IF OBJECT_ID('tempdb..#DiscoveredColumns') IS NOT NULL
         DROP TABLE #DiscoveredColumns;
 
@@ -136,20 +118,21 @@ BEGIN
         , IsIdentity    bit
     );
 
+    DECLARE @SQL nvarchar(max);
+
     SET @SQL = N'
-        USE [' + @TargetDB + '];
         INSERT INTO #DiscoveredColumns (ColumnName, IsIdentity)
         SELECT
             src.COLUMN_NAME
-            , ISNULL(COLUMNPROPERTY(
-                OBJECT_ID(''' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + '''),
-                src.COLUMN_NAME,
-                ''IsIdentity''), 0)
+            , ISNULL(sc.is_identity, 0)
         FROM [' + @SourceDB + '].INFORMATION_SCHEMA.COLUMNS src
         INNER JOIN [' + @TargetDB + '].INFORMATION_SCHEMA.COLUMNS tgt
             ON LOWER(tgt.TABLE_SCHEMA) = LOWER(''' + @TargetSchema + ''')
             AND LOWER(tgt.TABLE_NAME)  = LOWER(''' + @TargetTable  + ''')
             AND LOWER(tgt.COLUMN_NAME) = LOWER(src.COLUMN_NAME)
+        LEFT JOIN [' + @TargetDB + '].sys.columns sc
+            ON sc.object_id = OBJECT_ID(''[' + @TargetDB + '].[' + @TargetSchema + '].[' + @TargetTable + ']'')
+            AND LOWER(sc.name) = LOWER(src.COLUMN_NAME)
         WHERE LOWER(src.TABLE_SCHEMA) = LOWER(''' + @SourceSchema + ''')
           AND LOWER(src.TABLE_NAME)   = LOWER(''' + @SourceTable  + ''')';
 
@@ -158,6 +141,15 @@ BEGIN
     /* ----------------------------------------------------------------
        Build column lists from discovered columns
     ---------------------------------------------------------------- */
+    DECLARE
+        @UpdateColumnList   varchar(max)    = ''
+        , @ExceptSourceList varchar(max)    = ''
+        , @ExceptTargetList varchar(max)    = ''
+        , @InsertColList    varchar(max)    = ''
+        , @InsertValList    varchar(max)    = ''
+        , @MergeOnCondition varchar(max)    = ''
+        , @ColName          varchar(255);
+
     DECLARE col_cursor CURSOR LOCAL FAST_FORWARD FOR
         SELECT QUOTENAME(ColumnName)
         FROM #DiscoveredColumns
@@ -183,7 +175,7 @@ BEGIN
 
     DROP TABLE #DiscoveredColumns;
 
-    /* Remove trailing commas - only if strings are not empty */
+    /* Remove trailing commas */
     IF LEN(@UpdateColumnList) > 0
         SET @UpdateColumnList = LEFT(@UpdateColumnList, LEN(@UpdateColumnList) - 3);
     IF LEN(@ExceptSourceList) > 0
@@ -232,8 +224,8 @@ BEGIN
         + CHAR(13) + CHAR(10) + '        , ' + QUOTENAME(@WH_ModifiedDateColumnName);
 
     SET @InsertValList = @InsertValList
-        + CHAR(13) + CHAR(10) + '        , ''' + CONVERT(varchar, @Now, 121) + ''''
-        + CHAR(13) + CHAR(10) + '        , ''' + CONVERT(varchar, @Now, 121) + '''';
+        + CHAR(13) + CHAR(10) + '        , ' + @NowExpression
+        + CHAR(13) + CHAR(10) + '        , ' + @NowExpression;
 
     /* ----------------------------------------------------------------
        Build final MERGE statement
@@ -258,7 +250,7 @@ WHEN MATCHED
     )
 THEN UPDATE SET
 ' + @UpdateColumnList + '
-        , tgt.' + QUOTENAME(@WH_ModifiedDateColumnName) + ' = ''' + CONVERT(varchar, @Now, 121) + '''
+        , tgt.' + QUOTENAME(@WH_ModifiedDateColumnName) + ' = ' + @NowExpression + '
 
 /* ----------------------------------------------------------------
    Not matched by target - INSERT

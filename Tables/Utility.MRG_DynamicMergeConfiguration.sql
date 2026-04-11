@@ -1,4 +1,4 @@
-CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
+create TABLE [Utility].[MRG_DynamicMergeConfiguration]
 (
     DynamicMergeConfigurationID     int             NOT NULL IDENTITY(1,1)
     /* The name used for the execute */
@@ -18,7 +18,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
     , WH_ModifiedDateColumnName         varchar(255)    NULL
     , WH_RowEffectiveDateColumnName     varchar(255)    NULL
     , WH_RowExpirationDateColumnName    varchar(255)    NULL
-    , WH_RowEffExDateType               varchar(10)     NULL
+    , WH_RowExpirationDateValue         datetime2       NULL
     , WH_VersionColumnName              varchar(255)    NULL
     , WH_IsCurrentColumnName            varchar(255)    NULL
     , WH_isDeletedColumnName            varchar(255)    NULL
@@ -36,16 +36,14 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
         CHECK (QualifiedTargetName LIKE '%.%.%')
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_QualifiedTargetHistoryName
         CHECK (QualifiedTargetHistoryName IS NULL OR QualifiedTargetHistoryName LIKE '%.%.%')
-    , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_WH_RowEffExDateType
-        CHECK (WH_RowEffExDateType IS NULL OR WH_RowEffExDateType IN ('date', 'datetime', 'datetime2'))
 
     /* ----------------------------------------------------------------
        SCD1
        - No history kept, rows are overwritten
-       - Hard delete if not matched by source
+        - Hard delete if not matched by source
        - Requires: CreateDate, ModifiedDate
        - Must be NULL: TargetHistory, RowEffective, RowExpiration,
-                       EffExDateType, Version, IsCurrent, IsDeleted
+                       Version, IsCurrent, IsDeleted
     ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD1 CHECK
         (
@@ -56,14 +54,14 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND QualifiedSourceName             IS NOT NULL
             AND QualifiedTargetName             IS NOT NULL
             AND MergeOnColumns                  IS NOT NULL
-            AND DeleteIfNotMatchedBySource       IS NOT NULL
+            AND DeleteIfNotMatchedBySource      IS NOT NULL
             AND WH_CreateDateColumnName         IS NOT NULL
             AND WH_ModifiedDateColumnName       IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName      IS NULL
             AND WH_RowEffectiveDateColumnName   IS NULL
             AND WH_RowExpirationDateColumnName  IS NULL
-            AND WH_RowEffExDateType             IS NULL
+            AND WH_RowExpirationDateValue       IS NULL
             AND WH_VersionColumnName            IS NULL
             AND WH_IsCurrentColumnName          IS NULL
             AND WH_isDeletedColumnName          IS NULL
@@ -74,7 +72,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
        SCD2Date
        - History via date ranges
        - Requires: CreateDate, ModifiedDate, IsDeleted,
-                   RowEffectiveDate, RowExpirationDate, EffExDateType
+                   RowEffectiveDate, RowExpirationDate
        - Must be NULL: TargetHistory, Version, IsCurrent
     ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD2Date CHECK
@@ -92,7 +90,6 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND WH_isDeletedColumnName          IS NOT NULL
             AND WH_RowEffectiveDateColumnName   IS NOT NULL
             AND WH_RowExpirationDateColumnName  IS NOT NULL
-            AND WH_RowEffExDateType             IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName      IS NULL
             AND WH_VersionColumnName            IS NULL
@@ -104,7 +101,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
        SCD2DateAndCurrent
        - History via date ranges + IsCurrent flag
        - Requires: CreateDate, ModifiedDate, IsCurrent, IsDeleted,
-                   RowEffectiveDate, RowExpirationDate, EffExDateType
+                   RowEffectiveDate, RowExpirationDate
        - Must be NULL: TargetHistory, Version
     ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD2DateAndCurrent CHECK
@@ -123,7 +120,6 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND WH_isDeletedColumnName          IS NOT NULL
             AND WH_RowEffectiveDateColumnName   IS NOT NULL
             AND WH_RowExpirationDateColumnName  IS NOT NULL
-            AND WH_RowEffExDateType             IS NOT NULL
             /* Must be NULL */
             AND QualifiedTargetHistoryName      IS NULL
             AND WH_VersionColumnName            IS NULL
@@ -135,7 +131,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
        - History via version number + IsCurrent flag
        - Requires: CreateDate, Version, IsCurrent, IsDeleted
        - Must be NULL: TargetHistory, ModifiedDate,
-                       RowEffective, RowExpiration, EffExDateType
+                       RowEffective, RowExpiration
     ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD2Version CHECK
         (
@@ -156,7 +152,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND WH_ModifiedDateColumnName       IS NULL
             AND WH_RowEffectiveDateColumnName   IS NULL
             AND WH_RowExpirationDateColumnName  IS NULL
-            AND WH_RowEffExDateType             IS NULL
+            AND WH_RowExpirationDateValue       IS NULL
             )
         )
 
@@ -166,7 +162,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
        - Old row moved to history on change or delete
        - Requires: CreateDate, TargetHistory
        - Must be NULL: ModifiedDate, RowEffective, RowExpiration,
-                       EffExDateType, Version, IsCurrent, IsDeleted
+                       Version, IsCurrent, IsDeleted
     ---------------------------------------------------------------- */
     , CONSTRAINT CHK_Utility_MRG_DynamicMergeConfiguration_SCD4 CHECK
         (
@@ -184,7 +180,7 @@ CREATE TABLE [Utility].[MRG_DynamicMergeConfiguration]
             AND WH_ModifiedDateColumnName       IS NULL
             AND WH_RowEffectiveDateColumnName   IS NULL
             AND WH_RowExpirationDateColumnName  IS NULL
-            AND WH_RowEffExDateType             IS NULL
+            AND WH_RowExpirationDateValue       IS NULL
             AND WH_VersionColumnName            IS NULL
             AND WH_IsCurrentColumnName          IS NULL
             AND WH_isDeletedColumnName          IS NULL

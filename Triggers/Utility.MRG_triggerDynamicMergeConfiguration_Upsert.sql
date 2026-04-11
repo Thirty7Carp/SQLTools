@@ -17,6 +17,9 @@ GO
         falling back to MRG_DynamicMergeConfigurationDefaults when the config row has NULL
      7. All required WH meta column names are present in IgnoreColumns.
         If IgnoreColumns is NULL, it is auto-populated with the required WH meta columns.
+     8. WH_RowExpirationDateValue is resolved from defaults when required and not supplied.
+        Rows are rejected if WH_RowExpirationDateValue is supplied for an SCD type
+        that does not use row expiration.
 
    When performing the INSERT or UPDATE, WH meta column name fields are
    resolved against the defaults table so that the CHECK constraints are
@@ -50,7 +53,7 @@ BEGIN
         , @WH_ModifiedDateColumnName        varchar(255)
         , @WH_RowEffectiveDateColumnName    varchar(255)
         , @WH_RowExpirationDateColumnName   varchar(255)
-        , @WH_RowEffExDateType              varchar(10)
+        , @WH_RowExpirationDateValue        datetime2
         , @WH_VersionColumnName             varchar(255)
         , @WH_IsCurrentColumnName           varchar(255)
         , @WH_isDeletedColumnName           varchar(255)
@@ -71,7 +74,7 @@ BEGIN
         , @WH_ModifiedDateColumnName        = WH_ModifiedDateColumnName
         , @WH_RowEffectiveDateColumnName    = WH_RowEffectiveDateColumnName
         , @WH_RowExpirationDateColumnName   = WH_RowExpirationDateColumnName
-        , @WH_RowEffExDateType              = WH_RowEffExDateType
+        , @WH_RowExpirationDateValue        = WH_RowExpirationDateValue
         , @WH_VersionColumnName             = WH_VersionColumnName
         , @WH_IsCurrentColumnName           = WH_IsCurrentColumnName
         , @WH_isDeletedColumnName           = WH_isDeletedColumnName
@@ -93,81 +96,117 @@ BEGIN
         , @HistoryTable     varchar(255)    = PARSENAME(@QualifiedTargetHistoryName, 1);
 
     /* ----------------------------------------------------------------
-       Resolve WH meta column names - fall back to defaults where NULL
+       Determine whether this SCD type uses row expiration.
+       Only SCD2Date and SCD2DateAndCurrent use it.
+    ---------------------------------------------------------------- */
+    DECLARE @SCDUsesRowExpiration bit =
+        CASE WHEN @SCDType IN ('SCD2Date', 'SCD2DateAndCurrent') THEN 1 ELSE 0 END;
+
+    /* ----------------------------------------------------------------
+       Early rejection: WH_RowExpirationDateValue must not be supplied
+       for SCD types that do not use row expiration.
+    ---------------------------------------------------------------- */
+    IF @SCDUsesRowExpiration = 0 AND @WH_RowExpirationDateValue IS NOT NULL
+    BEGIN
+        PRINT 'WH_RowExpirationDateValue must be NULL for SCDType [' + @SCDType + ']. Row expiration is not used by this SCD type.';
+        RAISERROR('Validation failed. See above for details.', 16, 1);
+        RETURN;
+    END;
+
+    /* ----------------------------------------------------------------
+       Resolve WH meta column names - fall back to defaults where NULL.
        These resolved values are used for both validation and the final
        INSERT/UPDATE so that CHECK constraints are satisfied.
     ---------------------------------------------------------------- */
     DECLARE
-        @Defaults_CreateDate            varchar(255)
-        , @Defaults_ModifiedDate        varchar(255)
-        , @Defaults_RowEffectiveDate    varchar(255)
-        , @Defaults_RowExpirationDate   varchar(255)
-        , @Defaults_RowEffExDateType    varchar(10)
-        , @Defaults_Version             varchar(255)
-        , @Defaults_IsCurrent           varchar(255)
-        , @Defaults_IsDeleted           varchar(255)
-        , @Defaults_UTCOffset           smallint;
+        @Defaults_CreateDate                varchar(255)
+        , @Defaults_ModifiedDate            varchar(255)
+        , @Defaults_RowEffectiveDate        varchar(255)
+        , @Defaults_RowExpirationDate       varchar(255)
+        , @Defaults_RowExpirationDateValue  varchar(255)
+        , @Defaults_Version                 varchar(255)
+        , @Defaults_IsCurrent               varchar(255)
+        , @Defaults_IsDeleted               varchar(255)
+        , @Defaults_UTCOffset               smallint;
 
     SELECT
-        @Defaults_CreateDate            = WH_CreateDateColumnName
-        , @Defaults_ModifiedDate        = WH_ModifiedDateColumnName
-        , @Defaults_RowEffectiveDate    = WH_RowEffectiveDateColumnName
-        , @Defaults_RowExpirationDate   = WH_RowExpirationDateColumnName
-        , @Defaults_RowEffExDateType    = WH_RowEffExDateType
-        , @Defaults_Version             = WH_VersionColumnName
-        , @Defaults_IsCurrent           = WH_isCurrentColumnName
-        , @Defaults_IsDeleted           = WH_isDeletedColumnName
-        , @Defaults_UTCOffset           = WH_UTCOffset
+        @Defaults_CreateDate                = WH_CreateDateColumnName
+        , @Defaults_ModifiedDate            = WH_ModifiedDateColumnName
+        , @Defaults_RowEffectiveDate        = WH_RowEffectiveDateColumnName
+        , @Defaults_RowExpirationDate       = WH_RowExpirationDateColumnName
+        , @Defaults_RowExpirationDateValue  = WH_RowExpirationDateValue
+        , @Defaults_Version                 = WH_VersionColumnName
+        , @Defaults_IsCurrent               = WH_isCurrentColumnName
+        , @Defaults_IsDeleted               = WH_isDeletedColumnName
+        , @Defaults_UTCOffset               = WH_UTCOffset
     FROM [Utility].[MRG_DynamicMergeConfigurationDefaults];
 
     /* Resolved values - used for validation AND written to the table */
     DECLARE
-        @Resolved_CreateDate            varchar(255)    = ISNULL(@WH_CreateDateColumnName,         @Defaults_CreateDate)
-        , @Resolved_ModifiedDate        varchar(255)    = ISNULL(@WH_ModifiedDateColumnName,       @Defaults_ModifiedDate)
-        , @Resolved_RowEffectiveDate    varchar(255)    = ISNULL(@WH_RowEffectiveDateColumnName,   @Defaults_RowEffectiveDate)
-        , @Resolved_RowExpirationDate   varchar(255)    = ISNULL(@WH_RowExpirationDateColumnName,  @Defaults_RowExpirationDate)
-        , @Resolved_RowEffExDateType    varchar(10)     = ISNULL(@WH_RowEffExDateType,             @Defaults_RowEffExDateType)
-        , @Resolved_Version             varchar(255)    = ISNULL(@WH_VersionColumnName,            @Defaults_Version)
-        , @Resolved_IsCurrent           varchar(255)    = ISNULL(@WH_IsCurrentColumnName,          @Defaults_IsCurrent)
-        , @Resolved_IsDeleted           varchar(255)    = ISNULL(@WH_isDeletedColumnName,          @Defaults_IsDeleted)
-        , @Resolved_UTCOffset           smallint        = ISNULL(@WH_UTCOffset, ISNULL(@Defaults_UTCOffset, 0));
+        @Resolved_CreateDate                varchar(255)    = ISNULL(@WH_CreateDateColumnName,          @Defaults_CreateDate)
+        , @Resolved_ModifiedDate            varchar(255)    = ISNULL(@WH_ModifiedDateColumnName,        @Defaults_ModifiedDate)
+        , @Resolved_RowEffectiveDate        varchar(255)    = ISNULL(@WH_RowEffectiveDateColumnName,    @Defaults_RowEffectiveDate)
+        , @Resolved_RowExpirationDate       varchar(255)    = ISNULL(@WH_RowExpirationDateColumnName,   @Defaults_RowExpirationDate)
+        , @Resolved_RowExpirationDateValue  datetime2       = CASE
+                                                                  WHEN @SCDUsesRowExpiration = 1
+                                                                      THEN ISNULL(@WH_RowExpirationDateValue, TRY_CAST(@Defaults_RowExpirationDateValue AS datetime2))
+                                                                  ELSE NULL
+                                                              END
+        , @Resolved_Version                 varchar(255)    = ISNULL(@WH_VersionColumnName,             @Defaults_Version)
+        , @Resolved_IsCurrent               varchar(255)    = ISNULL(@WH_IsCurrentColumnName,           @Defaults_IsCurrent)
+        , @Resolved_IsDeleted               varchar(255)    = ISNULL(@WH_isDeletedColumnName,           @Defaults_IsDeleted)
+        , @Resolved_UTCOffset               smallint        = ISNULL(@WH_UTCOffset, ISNULL(@Defaults_UTCOffset, 0));
 
-    /* For SCD types where a field must be NULL, force it to NULL
-       regardless of what the defaults table contains */
+    /* ----------------------------------------------------------------
+       For SCD types where fields must be NULL, force them to NULL
+       regardless of what the defaults table contains.
+    ---------------------------------------------------------------- */
     IF @SCDType = 'SCD1'
     BEGIN
-        SET @Resolved_RowEffectiveDate  = NULL;
-        SET @Resolved_RowExpirationDate = NULL;
-        SET @Resolved_RowEffExDateType  = NULL;
-        SET @Resolved_Version           = NULL;
-        SET @Resolved_IsCurrent         = NULL;
-        SET @Resolved_IsDeleted         = NULL;
+        SET @Resolved_RowEffectiveDate          = NULL;
+        SET @Resolved_RowExpirationDate         = NULL;
+        SET @Resolved_RowExpirationDateValue    = NULL;
+        SET @Resolved_Version                   = NULL;
+        SET @Resolved_IsCurrent                 = NULL;
+        SET @Resolved_IsDeleted                 = NULL;
     END
     ELSE IF @SCDType = 'SCD2Date'
     BEGIN
-        SET @Resolved_Version           = NULL;
-        SET @Resolved_IsCurrent         = NULL;
+        SET @Resolved_Version                   = NULL;
+        SET @Resolved_IsCurrent                 = NULL;
     END
     ELSE IF @SCDType = 'SCD2DateAndCurrent'
     BEGIN
-        SET @Resolved_Version           = NULL;
+        SET @Resolved_Version                   = NULL;
     END
     ELSE IF @SCDType = 'SCD2Version'
     BEGIN
-        SET @Resolved_ModifiedDate      = NULL;
-        SET @Resolved_RowEffectiveDate  = NULL;
-        SET @Resolved_RowExpirationDate = NULL;
-        SET @Resolved_RowEffExDateType  = NULL;
+        SET @Resolved_ModifiedDate              = NULL;
+        SET @Resolved_RowEffectiveDate          = NULL;
+        SET @Resolved_RowExpirationDate         = NULL;
+        SET @Resolved_RowExpirationDateValue    = NULL;
     END
     ELSE IF @SCDType = 'SCD4'
     BEGIN
-        SET @Resolved_ModifiedDate      = NULL;
-        SET @Resolved_RowEffectiveDate  = NULL;
-        SET @Resolved_RowExpirationDate = NULL;
-        SET @Resolved_RowEffExDateType  = NULL;
-        SET @Resolved_Version           = NULL;
-        SET @Resolved_IsCurrent         = NULL;
-        SET @Resolved_IsDeleted         = NULL;
+        SET @Resolved_ModifiedDate              = NULL;
+        SET @Resolved_RowEffectiveDate          = NULL;
+        SET @Resolved_RowExpirationDate         = NULL;
+        SET @Resolved_RowExpirationDateValue    = NULL;
+        SET @Resolved_Version                   = NULL;
+        SET @Resolved_IsCurrent                 = NULL;
+        SET @Resolved_IsDeleted                 = NULL;
+    END;
+
+    /* ----------------------------------------------------------------
+       For SCD types that require row expiration, ensure a value was
+       resolved. Fail early with a clear message rather than letting
+       a CHECK constraint violation surface later.
+    ---------------------------------------------------------------- */
+    IF @SCDUsesRowExpiration = 1 AND @Resolved_RowExpirationDateValue IS NULL
+    BEGIN
+        PRINT 'WH_RowExpirationDateValue is required for SCDType [' + @SCDType + '] but was not supplied and no default is configured in MRG_DynamicMergeConfigurationDefaults.';
+        RAISERROR('Validation failed. See above for details.', 16, 1);
+        RETURN;
     END;
 
     /* ----------------------------------------------------------------
@@ -186,7 +225,6 @@ BEGIN
         , (LOWER(@Resolved_IsCurrent))
         , (LOWER(@Resolved_IsDeleted));
 
-    -- Remove NULLs (columns not required for this SCD type)
     DELETE FROM @WHMetaColumns WHERE ColumnName IS NULL;
 
     /* ----------------------------------------------------------------
@@ -542,7 +580,7 @@ BEGIN
             , WH_ModifiedDateColumnName         = @Resolved_ModifiedDate
             , WH_RowEffectiveDateColumnName     = @Resolved_RowEffectiveDate
             , WH_RowExpirationDateColumnName    = @Resolved_RowExpirationDate
-            , WH_RowEffExDateType               = @Resolved_RowEffExDateType
+            , WH_RowExpirationDateValue         = @Resolved_RowExpirationDateValue
             , WH_VersionColumnName              = @Resolved_Version
             , WH_IsCurrentColumnName            = @Resolved_IsCurrent
             , WH_isDeletedColumnName            = @Resolved_IsDeleted
@@ -568,7 +606,7 @@ BEGIN
             , WH_ModifiedDateColumnName
             , WH_RowEffectiveDateColumnName
             , WH_RowExpirationDateColumnName
-            , WH_RowEffExDateType
+            , WH_RowExpirationDateValue
             , WH_VersionColumnName
             , WH_IsCurrentColumnName
             , WH_isDeletedColumnName
@@ -589,7 +627,7 @@ BEGIN
             , @Resolved_ModifiedDate
             , @Resolved_RowEffectiveDate
             , @Resolved_RowExpirationDate
-            , @Resolved_RowEffExDateType
+            , @Resolved_RowExpirationDateValue
             , @Resolved_Version
             , @Resolved_IsCurrent
             , @Resolved_IsDeleted
