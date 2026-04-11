@@ -118,7 +118,7 @@ EXEC Utility.MRG_processSCD1
 
 The following table describes which fields are required, optional, or must be left blank for each SCD type. Fields marked as **Default** can be left blank if a value is configured in `Utility.MRG_DynamicMergeConfigurationDefaults`.
 
-| Field | SCD1 | SCD2Date | SCD2DateAndCurrent | SCD2Version | SCD4 |
+| Field | SCD1 (LIVE) | SCD2Date (DEV) | SCD2DateAndCurrent (DEV) | SCD2Version (DEV) | SCD4 (DEV) |
 |---|---|---|---|---|---|
 | `MergeConfigurationName` | Required | Required | Required | Required | Required |
 | `QualifiedSourceName` | Required | Required | Required | Required | Required |
