@@ -27,13 +27,15 @@
 IF OBJECT_ID('TestData.Test.MRG_SCD1_Source', 'U') IS NOT NULL
     DROP TABLE TestData.Test.MRG_SCD1_Source;
 
+GO
+
 CREATE TABLE TestData.Test.MRG_SCD1_Source
 (
     CustomerID      int             NOT NULL
     , FirstName     varchar(100)    NULL
     , LastName      varchar(100)    NULL
     , Email         varchar(255)    NULL
-    , Country       varchar(100)    NOT NULL
+    , Country       varchar(100)     NULL
     , Age           int             NULL
     , LoyaltyPoints int             NULL
 );
@@ -48,59 +50,60 @@ IF OBJECT_ID('TestData.Test.MRG_SCD1_Target', 'U') IS NOT NULL
 
 GO
 
-
 CREATE TABLE TestData.Test.MRG_SCD1_Target
 (
-    CustomerID      int             NOT NULL
-    , FirstName     varchar(100)    NULL
-    , LastName      varchar(100)    NULL
-    , Email         varchar(255)    NULL
-    , Country       varchar(100)    NOT NULL
-    , Age           int             NULL
-    , LoyaltyPoints int             NULL
-    , WH_CreateDateTime_UTC   datetime2       NOT NULL
-    , WH_ModifiedDateTime_UTC      datetime2       NOT NULL
+    CustomerID              int             NOT NULL
+    , FirstName             varchar(100)    NULL
+    , LastName              varchar(100)    NULL
+    , Email                 varchar(255)    NULL
+    , Country               varchar(100)     NULL
+    , Age                   int             NULL
+    , LoyaltyPoints         int             NULL
+    , WH_CreateDateTime_UTC     datetime2   NOT NULL
+    , WH_ModifiedDateTime_UTC   datetime2   NOT NULL
 );
+
+GO
 
 /* ================================================================
    STEP 3 - Insert source data
    CustomerID 1  - No change
    CustomerID 2  - Email changed (varchar update)
    CustomerID 3  - Age changed (int update)
-   CustomerID 4  - FirstName was NULL, now has a value (NULL varchar -> value)
-   CustomerID 5  - LoyaltyPoints was NULL, now has a value (NULL int -> value)
+   CustomerID 4  - FirstName was NULL in target, now has a value
+   CustomerID 5  - LoyaltyPoints was NULL in target, now has a value
    CustomerID 6  - New record, all values populated
    CustomerID 7  - New record, FirstName and Age are NULL
 ================================================================ */
 INSERT INTO TestData.Test.MRG_SCD1_Source
 (CustomerID, FirstName, LastName, Email, Country, Age, LoyaltyPoints)
 VALUES
-    (1, 'Alice',   'Smith',   'alice@example.com',     'Australia',   30,   100)   -- No change
-    , (2, 'Bob',   'Jones',   'bob.new@example.com',   'Australia',   25,   200)   -- Email changed
-    , (3, 'Carol', 'White',   'carol@example.com',     'New Zealand', 35,   300)   -- Age changed
-    , (4, NULL, NULL, NULL,      'Australia',   40,   400)   -- FirstName NULL -> value
-    , (5, 'Eve',   'Taylor',  'eve@example.com',       'Australia',   28,   500)   -- LoyaltyPoints NULL -> value
-    , (6, 'Frank', 'Wilson',  'frank@example.com',     'Australia',   45,   600)   -- New record
-    , (7, NULL,    'Davies',  NULL,                    'Australia',   NULL, NULL); -- New record with NULLs
+    (1, 'Alice',  'Smith',   'alice@example.com',    'Australia',   30,   100)   -- No change
+    , (2, 'Bob',  'Jones',   'bob.new@example.com',  'Australia',   25,   200)   -- Email changed
+    , (3, 'Carol','White',   'carol@example.com',    'New Zealand', 35,   300)   -- Age changed
+    , (4, 'Dave', 'Brown',   'dave@example.com',     'Australia',   40,   400)   -- FirstName NULL -> value
+    , (5, 'Eve',  'Taylor',  'eve@example.com',      'Australia',   28,   500)   -- LoyaltyPoints NULL -> value
+    , (6, 'Frank','Wilson',  'frank@example.com',    'Australia',   45,   600)   -- New record
+    , (7, NULL,   'Davies',  NULL,                   'Australia',   NULL, NULL); -- New record with NULLs
 
 /* ================================================================
    STEP 4 - Insert target data
-   CustomerID 1  - Matches source exactly
-   CustomerID 2  - Old email
-   CustomerID 3  - Old age (28 -> 35)
-   CustomerID 4  - FirstName is NULL in target
-   CustomerID 5  - LoyaltyPoints is NULL in target
-   CustomerID 8  - Exists in target only (will be hard deleted)
+   CustomerID 1  - Matches source exactly                      -> No action
+   CustomerID 2  - Old email                                   -> UPDATE
+   CustomerID 3  - Old age (28, source has 35)                 -> UPDATE
+   CustomerID 4  - FirstName is NULL in target                 -> UPDATE
+   CustomerID 5  - LoyaltyPoints is NULL in target             -> UPDATE
+   CustomerID 8  - Exists in target only                       -> No action (DeleteIfNotMatchedBySource = 0)
 ================================================================ */
 INSERT INTO TestData.Test.MRG_SCD1_Target
 (CustomerID, FirstName, LastName, Email, Country, Age, LoyaltyPoints, WH_CreateDateTime_UTC, WH_ModifiedDateTime_UTC)
 VALUES
-    (1, 'Alice',  'Smith',  'alice@example.com',     'Australia',   30,   100,  '2024-01-01', '2024-01-01')  -- No change
-    , (2, 'Bob',  'Jones',  'bob.old@example.com',   'Australia',   25,   200,  '2024-01-01', '2024-01-01')  -- Email will update
-    , (3, 'Carol','White',  'carol@example.com',     'New Zealand', 28,   300,  '2024-01-01', '2024-01-01')  -- Age will update
-    , (4, NULL,   'Brown',  NULL,      'Australia',   40,   400,  '2024-01-01', '2024-01-01')  -- FirstName NULL -> value
-    , (5, 'Eve',  'Taylor', 'eve@example.com',       'Australia',   28,   NULL, '2024-01-01', '2024-01-01')  -- LoyaltyPoints NULL -> value
-    , (8, 'Grace','Hall',   'grace@example.com',     'Australia',   33,   700,  '2024-01-01', '2024-01-01'); -- Will delete
+    (1, NULL, NULL,  NULL,    NULL,   NULL,   NULL,  '2024-01-01', '2024-01-01')  -- No change
+    , (2, 'Bob', NULL,  'bob.old@example.com',  'Australia',   25,   200,  '2024-01-01', '2024-01-01')  -- Email will update
+    , (3, NULL,'White', 'carol@example.com',    'New Zealand', 28,   300,  '2024-01-01', '2024-01-01')  -- Age will update
+    , (4, NULL,  'Brown',  NULL,                   'Australia',   40,   400,  '2024-01-01', '2024-01-01')  -- FirstName NULL -> value
+    , (5, 'Eve', 'Taylor', 'eve@example.com',      'Australia',   28,   NULL, '2024-01-01', '2024-01-01')  -- LoyaltyPoints NULL -> value
+    , (8, 'Grace','Hall',  'grace@example.com',    'Australia',   33,   700,  '2024-01-01', '2024-01-01'); -- No action, delete not enabled
 
 /* ================================================================
    STEP 5 - Show state BEFORE merge
@@ -114,13 +117,12 @@ SELECT 'Target' AS TableName, * FROM TestData.Test.MRG_SCD1_Target ORDER BY Cust
 /* ================================================================
    STEP 6 - Insert merge configuration
 ================================================================ */
-
 IF EXISTS (
     SELECT 1
     FROM SQLTools.Utility.MRG_DynamicMergeConfiguration
     WHERE MergeConfigurationName = 'Test_SCD1'
 )
-    Delete from SQLTools.Utility.MRG_DynamicMergeConfiguration
+    DELETE FROM SQLTools.Utility.MRG_DynamicMergeConfiguration
     WHERE MergeConfigurationName = 'Test_SCD1';
 
 INSERT INTO SQLTools.Utility.MRG_DynamicMergeConfiguration
@@ -144,19 +146,17 @@ VALUES
     , 'SCD1'
     , 'CustomerID'
     , NULL
-    , 0             -- Hard delete rows not matched by source
-    , 1             -- Ignore identity columns
-    , NULL -- Override default WH_CreateDateColumnName
-    , NULL    -- Override default WH_ModifiedDateColumnName
+    , 1
+    , 1
+    , NULL
+    , NULL
 );
 
-select * from SQLTools.Utility.MRG_DynamicMergeConfiguration
 /* ================================================================
    STEP 7 - Run in debug mode first to review generated SQL
 ================================================================ */
 PRINT '--- DEBUG MODE - Generated MERGE SQL ---';
-USE SQLTools;
-EXEC Utility.MRG_ExecuteMerge
+EXEC SQLTools.Utility.MRG_ExecuteMerge
     @MergeConfigurationName = 'Test_SCD1'
     , @DebugMode            = 1;
 
@@ -164,22 +164,21 @@ EXEC Utility.MRG_ExecuteMerge
    STEP 8 - Execute the merge
 ================================================================ */
 PRINT '--- EXECUTING MERGE ---';
-EXEC Utility.MRG_ExecuteMerge
+EXEC SQLTools.Utility.MRG_ExecuteMerge
     @MergeConfigurationName = 'Test_SCD1'
     , @DebugMode            = 0;
-USE TestData;
 
 /* ================================================================
    STEP 9 - Show state AFTER merge
    Expected results:
-     CustomerID 1  - Unchanged (DW_WH_ModifiedDateTime_UTC same as before)
-     CustomerID 2  - Email updated to bob.new@example.com, DW_WH_ModifiedDateTime_UTC updated
-     CustomerID 3  - Age updated to 35, DW_WH_ModifiedDateTime_UTC updated
-     CustomerID 4  - FirstName updated from NULL to 'Dave', DW_WH_ModifiedDateTime_UTC updated
-     CustomerID 5  - LoyaltyPoints updated from NULL to 500, DW_WH_ModifiedDateTime_UTC updated
-     CustomerID 6  - New row inserted (Frank Wilson), WH_CreateDateTime_UTC and DW_WH_ModifiedDateTime_UTC set
-     CustomerID 7  - New row inserted (NULL FirstName, NULL Email, NULL Age, NULL LoyaltyPoints)
-     CustomerID 8  - Deleted (Grace Hall no longer in source)
+     CustomerID 1  - Unchanged (WH_ModifiedDateTime_UTC same as before)
+     CustomerID 2  - Email updated to bob.new@example.com, WH_ModifiedDateTime_UTC updated
+     CustomerID 3  - Age updated to 35, WH_ModifiedDateTime_UTC updated
+     CustomerID 4  - FirstName updated from NULL to Dave, WH_ModifiedDateTime_UTC updated
+     CustomerID 5  - LoyaltyPoints updated from NULL to 500, WH_ModifiedDateTime_UTC updated
+     CustomerID 6  - New row inserted (Frank Wilson), WH_CreateDateTime_UTC and WH_ModifiedDateTime_UTC set
+     CustomerID 7  - New row inserted (NULL FirstName, NULL Age), WH_CreateDateTime_UTC and WH_ModifiedDateTime_UTC set
+     CustomerID 8  - Unchanged (DeleteIfNotMatchedBySource = 0)
 ================================================================ */
 PRINT '--- TARGET TABLE (after merge) ---';
 SELECT 'Target' AS TableName, * FROM TestData.Test.MRG_SCD1_Target ORDER BY CustomerID;

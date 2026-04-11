@@ -1,25 +1,3 @@
-IF OBJECT_ID('Utility.MRG_processSCD1', 'P') IS NOT NULL
-    DROP PROCEDURE Utility.MRG_processSCD1;
-GO
-
-/* =====================================================================
-   Utility.MRG_processSCD1
-   -----------------------------------------------------------------------
-   Performs a dynamic SCD Type 1 merge based on configuration stored in
-   Utility.MRG_DynamicMergeConfiguration.
-
-   SCD1 Behaviour:
-     - Matched + Changed     : UPDATE all non-key/non-ignored columns
-                               Set WH_ModifiedDate = now
-     - Not Matched by Target : INSERT new row
-                               Set WH_CreateDate = now
-                               Set WH_ModifiedDate = now
-     - Not Matched by Source : Hard DELETE if DeleteIfNotMatchedBySource = 1
-
-   Parameters:
-     @MergeConfigurationName : Name of the config row to use
-     @DebugMode              : 1 = PRINT dynamic SQL instead of executing
-   ===================================================================== */
 CREATE PROCEDURE Utility.MRG_processSCD1
     @MergeConfigurationName     varchar(255)
     , @DebugMode                bit             = 0
@@ -282,7 +260,7 @@ THEN DELETE';
        Debug or Execute
     ---------------------------------------------------------------- */
     IF @DebugMode = 1
-        PRINT @MergeSQL;
+        SELECT @MergeSQL AS GeneratedSQL;
     ELSE
     BEGIN
         BEGIN TRY

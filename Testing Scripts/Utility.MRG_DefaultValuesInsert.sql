@@ -10,7 +10,7 @@ INSERT INTO [Utility].[MRG_DynamicMergeConfigurationDefaults]
     , WH_ModifiedDateColumnName
     , WH_RowEffectiveDateColumnName
     , WH_RowExpirationDateColumnName
-    , WH_RowEffExDateType
+    , WH_RowExpirationDateValue
     , WH_VersionColumnName
     , WH_isCurrentColumnName
     , WH_isDeletedColumnName
@@ -22,7 +22,7 @@ VALUES
     , 'WH_ModifiedDateTime_UTC'
     , 'WH_RowEffectiveDateTime_UTC'
     , 'WH_RowExpirationDateTime_UTC'
-    , 'datetime2'
+    , '9999-12-31'
     , 'WH_Version'
     , 'WH_isCurrent'
     , 'WH_isDeleted'
