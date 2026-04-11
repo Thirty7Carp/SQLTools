@@ -11,3 +11,7 @@
 *.sqlite
 /Testing Scripts/New.sql
 /Testing Scripts/Old.sql
+/Procedures/Utility.MRG_processSCD2Date.sql
+/Procedures/Utility.MRG_processSCD2DateAndCurrent.sql
+/Procedures/Utility.MRG_processSCD2Version.sql
+/Procedures/Utility.MRG_processSCD4.sql
