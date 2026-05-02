@@ -1,4 +1,4 @@
-CREATE PROCEDURE Utility.MRG_processSCD1
+create PROCEDURE Utility.MRG_processSCD1
     @MergeConfigurationName     varchar(255)
     , @DebugMode                bit             = 0
 AS
@@ -56,7 +56,7 @@ BEGIN
        Build the timestamp expression used in dynamic SQL.
        Evaluated at row-write time rather than procedure start time.
     ---------------------------------------------------------------- */
-    DECLARE @NowExpression varchar(100) =
+    DECLARE @NowExpression nvarchar(100) =
         'DATEADD(MINUTE, ' + CAST(@WH_UTCOffset AS varchar(10)) + ', GETUTCDATE())';
 
     /* ----------------------------------------------------------------
@@ -96,23 +96,20 @@ BEGIN
         , IsIdentity    bit
     );
 
-    DECLARE @SQL nvarchar(max);
+    DECLARE @SQL nvarchar(max) = N'';
 
-    SET @SQL = N'
-        INSERT INTO #DiscoveredColumns (ColumnName, IsIdentity)
-        SELECT
-            src.COLUMN_NAME
-            , ISNULL(sc.is_identity, 0)
-        FROM [' + @SourceDB + '].INFORMATION_SCHEMA.COLUMNS src
-        INNER JOIN [' + @TargetDB + '].INFORMATION_SCHEMA.COLUMNS tgt
-            ON LOWER(tgt.TABLE_SCHEMA) = LOWER(''' + @TargetSchema + ''')
-            AND LOWER(tgt.TABLE_NAME)  = LOWER(''' + @TargetTable  + ''')
-            AND LOWER(tgt.COLUMN_NAME) = LOWER(src.COLUMN_NAME)
-        LEFT JOIN [' + @TargetDB + '].sys.columns sc
-            ON sc.object_id = OBJECT_ID(''[' + @TargetDB + '].[' + @TargetSchema + '].[' + @TargetTable + ']'')
-            AND LOWER(sc.name) = LOWER(src.COLUMN_NAME)
-        WHERE LOWER(src.TABLE_SCHEMA) = LOWER(''' + @SourceSchema + ''')
-          AND LOWER(src.TABLE_NAME)   = LOWER(''' + @SourceTable  + ''')';
+    SET @SQL = @SQL + N'INSERT INTO #DiscoveredColumns (ColumnName, IsIdentity)';
+    SET @SQL = @SQL + N' SELECT src.COLUMN_NAME, ISNULL(sc.is_identity, 0)';
+    SET @SQL = @SQL + N' FROM [' + @SourceDB + '].INFORMATION_SCHEMA.COLUMNS src';
+    SET @SQL = @SQL + N' INNER JOIN [' + @TargetDB + '].INFORMATION_SCHEMA.COLUMNS tgt';
+    SET @SQL = @SQL + N'     ON LOWER(tgt.TABLE_SCHEMA) = LOWER(''' + @TargetSchema + ''')';
+    SET @SQL = @SQL + N'    AND LOWER(tgt.TABLE_NAME)   = LOWER(''' + @TargetTable  + ''')';
+    SET @SQL = @SQL + N'    AND LOWER(tgt.COLUMN_NAME)  = LOWER(src.COLUMN_NAME)';
+    SET @SQL = @SQL + N' LEFT JOIN [' + @TargetDB + '].sys.columns sc';
+    SET @SQL = @SQL + N'     ON sc.object_id = OBJECT_ID(''[' + @TargetDB + '].[' + @TargetSchema + '].[' + @TargetTable + ']'')';
+    SET @SQL = @SQL + N'    AND LOWER(sc.name) = LOWER(src.COLUMN_NAME)';
+    SET @SQL = @SQL + N' WHERE LOWER(src.TABLE_SCHEMA) = LOWER(''' + @SourceSchema + ''')';
+    SET @SQL = @SQL + N'   AND LOWER(src.TABLE_NAME)   = LOWER(''' + @SourceTable  + ''')';
 
     EXEC sp_executesql @SQL;
 
@@ -120,16 +117,16 @@ BEGIN
        Build column lists from discovered columns
     ---------------------------------------------------------------- */
     DECLARE
-        @UpdateColumnList   varchar(max)    = ''
-        , @ExceptSourceList varchar(max)    = ''
-        , @ExceptTargetList varchar(max)    = ''
-        , @InsertColList    varchar(max)    = ''
-        , @InsertValList    varchar(max)    = ''
-        , @MergeOnCondition varchar(max)    = ''
-        , @ColName          varchar(255);
+        @UpdateColumnList   nvarchar(max)   = ''
+        , @ExceptSourceList nvarchar(max)   = ''
+        , @ExceptTargetList nvarchar(max)   = ''
+        , @InsertColList    nvarchar(max)   = ''
+        , @InsertValList    nvarchar(max)   = ''
+        , @MergeOnCondition nvarchar(max)   = ''
+        , @ColName          nvarchar(255);
 
     DECLARE col_cursor CURSOR LOCAL FAST_FORWARD FOR
-        SELECT QUOTENAME(ColumnName)
+        SELECT cast(QUOTENAME(ColumnName) as nvarchar(255))
         FROM #DiscoveredColumns
         WHERE LOWER(ColumnName) NOT IN (SELECT ColumnName FROM @ExcludedColumns)
           AND (@IgnoreIdentityColumns = 0 OR IsIdentity = 0);
@@ -168,10 +165,10 @@ BEGIN
     /* ----------------------------------------------------------------
        Build MergeOn join condition
     ---------------------------------------------------------------- */
-    DECLARE @MergeOnCol varchar(255);
+    DECLARE @MergeOnCol nvarchar(255);
 
     DECLARE mergeon_cursor CURSOR LOCAL FAST_FORWARD FOR
-        SELECT QUOTENAME(TRIM(CAST(value AS varchar(255))))
+        SELECT cast(QUOTENAME(TRIM(CAST(value AS varchar(255)))) as nvarchar(255))
         FROM STRING_SPLIT(@MergeOnColumns, ',')
         WHERE TRIM(CAST(value AS varchar(255))) <> '';
 
@@ -198,8 +195,8 @@ BEGIN
        Add WH meta columns to INSERT lists
     ---------------------------------------------------------------- */
     SET @InsertColList = @InsertColList
-        + CHAR(13) + CHAR(10) + '        , ' + QUOTENAME(@WH_CreateDateColumnName)
-        + CHAR(13) + CHAR(10) + '        , ' + QUOTENAME(@WH_ModifiedDateColumnName);
+        + CHAR(13) + CHAR(10) + '        , ' + cast(QUOTENAME(@WH_CreateDateColumnName) as varchar(max))
+        + CHAR(13) + CHAR(10) + '        , ' + cast(QUOTENAME(@WH_ModifiedDateColumnName) as varchar(max));
 
     SET @InsertValList = @InsertValList
         + CHAR(13) + CHAR(10) + '        , ' + @NowExpression
@@ -208,8 +205,9 @@ BEGIN
     /* ----------------------------------------------------------------
        Build final MERGE statement
     ---------------------------------------------------------------- */
-    DECLARE @MergeSQL nvarchar(max) = N'
-MERGE ' + QUOTENAME(@TargetDB) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + ' AS tgt
+    DECLARE @MergeSQL nvarchar(max) = N'';
+
+    SET @MergeSQL = @MergeSQL + N'MERGE ' + QUOTENAME(@TargetDB) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + ' AS tgt
 USING ' + QUOTENAME(@SourceDB) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@SourceTable) + ' AS src
     ON (
       ' + @MergeOnCondition + '

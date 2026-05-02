@@ -1,5 +1,5 @@
 /* =====================================================================
-   Test Script - SQLTools.Utility.MRG_processSCD1
+   Test Script - Utility.MRG_processSCD1
    -----------------------------------------------------------------------
    Creates test source and target tables in TestData.Test schema,
    inserts test data to cover all merge scenarios, then runs the merge
@@ -20,7 +20,7 @@
    Objects created:
      TestData.Test.MRG_SCD1_Source
      TestData.Test.MRG_SCD1_Target
-     SQLTools.Utility.MRG_DynamicMergeConfiguration row: 'Test_SCD1'
+     Utility.MRG_DynamicMergeConfiguration row: 'Test_SCD1'
    ===================================================================== */
 
 /* ================================================================
@@ -83,11 +83,11 @@ INSERT INTO TestData.Test.MRG_SCD1_Source
 (CustomerID, DateOfBirth, FirstName, LastName, Email, Country, Age, LoyaltyPoints)
 VALUES
     (1, '1990-01-01', 'Alice',  'Smith',  'alice@example.com',    'Australia',   30,   100)   -- No change
-    , (2, '1992-05-15', 'Bob',  'Jones',  'bob.new@example.com',  'Australia',   25,   200)   -- Email changed
-    , (3, '1985-11-30', 'Carol','White',  'carol@example.com',    'New Zealand', 35,   300)   -- Age changed
+    , (2, '1992-05-15', 'Bob',  NULL,  'bob.new@example.com',  'Australia',   25,   200)   -- Email changed
+    , (3, '1985-11-30', 'Carol','White',  null,    'New Zealand', 35,   300)   -- Age changed
     , (4, '1980-07-04', 'Dave', 'Brown',  'dave@example.com',     'Australia',   40,   400)   -- FirstName NULL -> value
     , (5, '1995-03-22', 'Eve',  'Taylor', 'eve@example.com',      'Australia',   28,   500)   -- LoyaltyPoints NULL -> value
-    , (6, '1988-09-10', 'Frank','Wilson', 'frank@example.com',    'Australia',   45,   600)   -- New record
+    , (6, '1988-09-10', NULL, NULL, 'frank@example.com',    'Australia',   45,   9999)   -- New record
     , (7, '1993-12-25', NULL,   'Davies', NULL,                   'Australia',   NULL, NULL); -- New record with NULLs
 
 /* ================================================================
@@ -123,13 +123,13 @@ SELECT 'Target' AS TableName, * FROM TestData.Test.MRG_SCD1_Target ORDER BY Cust
 ================================================================ */
 IF EXISTS (
     SELECT 1
-    FROM SQLTools.Utility.MRG_DynamicMergeConfiguration
+    FROM Utility.MRG_DynamicMergeConfiguration
     WHERE MergeConfigurationName = 'Test_SCD1'
 )
-    DELETE FROM SQLTools.Utility.MRG_DynamicMergeConfiguration
+    DELETE FROM Utility.MRG_DynamicMergeConfiguration
     WHERE MergeConfigurationName = 'Test_SCD1';
 
-INSERT INTO SQLTools.Utility.MRG_DynamicMergeConfiguration
+INSERT INTO Utility.MRG_DynamicMergeConfiguration
 (
     MergeConfigurationName
     , QualifiedSourceName
@@ -160,7 +160,7 @@ VALUES
    STEP 7 - Run in debug mode first to review generated SQL
 ================================================================ */
 PRINT '--- DEBUG MODE - Generated MERGE SQL ---';
-EXEC SQLTools.Utility.MRG_ExecuteMerge
+EXEC Utility.MRG_ExecuteMerge
     @MergeConfigurationName = 'Test_SCD1'
     , @DebugMode            = 1;
 
@@ -168,7 +168,7 @@ EXEC SQLTools.Utility.MRG_ExecuteMerge
    STEP 8 - Execute the merge
 ================================================================ */
 PRINT '--- EXECUTING MERGE ---';
-EXEC SQLTools.Utility.MRG_ExecuteMerge
+EXEC Utility.MRG_ExecuteMerge
     @MergeConfigurationName = 'Test_SCD1'
     , @DebugMode            = 0;
 
