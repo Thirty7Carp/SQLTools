@@ -42,7 +42,7 @@ Things it won't work with:
 - Create Utility.LNG_loadObjectParsedDependency - loads LNG_ObjectParsedDependency
 - Create Utility.LNG_updateObjectParsedDependency_ObjectCleanse - Updates LNG_ObjectParsedDependency
 - Create Utility.LNG_loadObjectDirectDependency - Loads LNG_ObjectDirectDependency.
-- Create Utility.LNG_updateObjectExtendedDependency - Loads LNG_ObjectExtendedDependency.
+- Create Utility.LNG_loadObjectExtendedDependency - Loads LNG_ObjectExtendedDependency.
 
 
 ### ENTIRELY OPTIONAL - Views
