@@ -38,7 +38,7 @@ Things it won't work with:
 - Create Utility.LNG_loadObjectDefinitions - Loads LNG_ObjectDefinitions
 - Create Utility.LNG_updateObjectDefinitions_RemoveComments - Removes all the commented code from LNG_ObjectDefintions. Ensures no commented out values are returned.
 - Create Utility.LNG_updateObjectDefinitions_RemoveWhitespace - Removes carriage returns, tabs, and double spaces in order to make reading the definition easier.
-- Create Utility.LNG_loadObjec]tExpressionDependency - loads LNG_ObjectExpressionDependency.
+- Create Utility.LNG_loadObjectExpressionDependency - loads LNG_ObjectExpressionDependency.
 - Create Utility.LNG_loadObjectParsedDependency - loads LNG_ObjectParsedDependency
 - Create Utility.LNG_updateObjectParsedDependency_ObjectCleanse - Updates LNG_ObjectParsedDependency
 - Create Utility.LNG_loadObjectDirectDependency - Loads LNG_ObjectDirectDependency.
